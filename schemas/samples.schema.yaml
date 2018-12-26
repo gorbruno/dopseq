@@ -1,0 +1,30 @@
+$schema: "http://json-schema.org/draft-04/schema#"
+description: row of the samples.tsv, representing a sequencing unit, i.e. single-end or paired-end data
+type: object
+properties:
+  sample:
+    type: string
+    description: sample name used as prefix for output 
+  unit:
+    type: string
+    description: unit id
+  platform:
+    type: string
+    enum: ["CAPILLARY", "LS454", "ILLUMINA", "SOLID", "HELICOS", "IONTORRENT", "ONT", "PACBIO"]
+    description: sequencing platform
+  adapters:
+    type: string
+    enum: ["dop", "wga", "illumina", "none"] # "dop_relaxed", "wga_relaxed",
+    description: adapters to remove 'dop' - DOP-PCR MW6 primer, 'wga' - WGA TG primer (both available in '_relaxed' versions), 'illumina' - standard Illumina adapters, 'none' - no specific adapters, just apply filtering
+  fq1:
+    type: string
+    description: path to FASTQ file
+  fq2:
+    type: string
+    description: path to second FASTQ file (leave empty in case of single-end)
+required:
+  - sample
+  - unit
+  - platform
+  - adapters
+  - fq1

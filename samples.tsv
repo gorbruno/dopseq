@@ -1,0 +1,5 @@
+sample	unit	platform	adapters	reference	min_len	min_q	fq1	fq2
+A	lane1	ILLUMINA	illumina	genome/genome.fa	20	20	fastq/1_S1_L001_R1_001.fastq.gz	fastq/1_S1_L001_R2_001.fastq.gz
+B	lane1	LS454	none	genome/genome.fa	20	20	fastq/2.fastq.gz
+C	lane1	ILLUMINA	wga	genome/genome.fa	20	20	fastq/1_S1_L001_R1_001.fastq.gz
+C	lane2	ILLUMINA	wga	genome/genome.fa	20	20	fastq/1_S1_L001_R2_001.fastq.gz

@@ -1,0 +1,64 @@
+$schema: "http://json-schema.org/draft-04/schema#"
+
+description: snakemake configuration file
+
+type: object
+
+properties:
+  samples:
+    type: string
+    description: path to file listing samples and per-sample parameters in .tsv format
+
+  genome:
+    type: string
+    description: path to target genome in fasta format
+
+  rmdup:
+    type: boolean
+    description: perform PCR duplicate removal?
+
+  params:
+    type: object
+    properties:
+      threads:
+        type: int
+        description: max threads per process (bwa mem, samtools merge)
+      cutadapt:
+        type: object
+        properties:
+          se:
+            type: string
+            description: common cutadapt parameters for single end trimming
+          pe:
+            type: string
+              description: common cutadapt parameters for paired end trimming
+        required:
+          - pe
+          - se
+      picard:
+        type: object
+        properties:
+          MarkDuplicates:
+            type: string
+        required:
+          - MarkDuplicates
+      filter:
+        type: object
+        description: final BAM filtering
+        properties:
+          min_mapq:
+            type: int
+            description: minimum mapping quality
+          min_len:
+            type: int
+            description: minimum aligment length
+    required:
+      - threads
+      - cutadapt
+      - picard
+      - filter
+
+required:
+  - samples
+  - genome
+  - params
