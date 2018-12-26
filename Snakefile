@@ -3,6 +3,8 @@ include: "rules/common.smk"
 ##### Target rules #####
 rule all:
     input:
+        expand("{genome}.bwt", genome=units["reference"].unique()),
+        expand("{genome}.fai", genome=units["reference"].unique()),
         expand("results/8_regions/{sample}.tsv", sample=units["sample"].unique()),
         expand("results/0_fastqc_init/{prefix}.html", prefix=units.prefix),
         expand("results/2_fastqc_trim/{prefix}.html", prefix=units.prefix),

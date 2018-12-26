@@ -85,12 +85,16 @@ def get_read_group(wildcards):
         platform=units.loc[(wildcards.sample, wildcards.unit), "platform"])
 
 def get_ref(wildcards):
-    """Get first reference genome for given sample."""
+    """Get reference genome for given sample."""
     return units.loc[wildcards.sample, "reference"].iloc[0]
 
 def get_ref_fai(wildcards):
-    """Get first reference genome for given sample."""
+    """Get reference genome fasta index for given sample."""
     return units.loc[wildcards.sample, "reference"].iloc[0] + '.fai'
+
+def get_ref_bwt(wildcards):
+    """Get reference genome bwa index for given sample."""
+    return units.loc[wildcards.sample, "reference"].iloc[0] + '.bwt'
 
 def get_min_len(wildcards):
     """Get filtering parameter of given sample-unit."""

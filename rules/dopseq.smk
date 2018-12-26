@@ -68,13 +68,13 @@ rule fastqc_trim:
 # genome preparation and alignment
 rule bwa_index:
     input:
-        "{genomepath}"
+        "{genome}"
     output:
-        "{genomepath}.amb",
-        "{genomepath}.ann",
-        "{genomepath}.bwt",
-        "{genomepath}.pac",
-        "{genomepath}.sa"
+        "{genome}.amb",
+        "{genome}.ann",
+        "{genome}.bwt",
+        "{genome}.pac",
+        "{genome}.sa"
     conda:
         "../env.yaml"
     shell:
@@ -84,9 +84,9 @@ rule bwa_index:
 
 rule samtools_faidx:
     input:
-        "{genomepath}"
+        "{genome}"
     output:
-        "{genomepath}.fai"
+        "{genome}.fai"
     conda:
         "../env.yaml"
     shell:
@@ -94,7 +94,8 @@ rule samtools_faidx:
 
 rule map_reads_bwa_mem:
     input:
-        reads=get_trimmed_reads
+        reads=get_trimmed_reads,
+        index=get_ref_bwt
     output:
         "results/3_mapped/{sample}-{unit}.sorted.bam"
     log:
