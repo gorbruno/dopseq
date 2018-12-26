@@ -52,14 +52,14 @@ rule trim_reads_pe:
         " {input}"
         " > {output.qc} 2> {log}"
 
-rule fastqc_trim:
+rule fastqc_trimmed:
     input:
         get_trimmed_reads
     output:
         html="results/2_fastqc_trim/{sample}-{unit}.html",
         zip="results/2_fastqc_trim/{sample}-{unit}.zip"
     # params:
-    #     dir="results/0_fastqc_init/"
+    #     dir="results/2_fastqc_trim/"
     # conda:
     #     "../env.yaml"
     wrapper:
@@ -135,7 +135,7 @@ rule mark_duplicates:
         "OUTPUT={output.bam} METRICS_FILE={output.metrics} "
         "&> {log}"
 
-rule samptools_filter:
+rule samtools_filter:
     input:
         # get_dedup_bams
         "results/4_dedup/{sample}-{unit}.bam"
