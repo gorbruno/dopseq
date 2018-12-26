@@ -109,6 +109,10 @@ Repeated setting of identical sample-unit combinations results in an obscure "Va
 For paired-end reads trimming with `dop` and `wga`, only pairs with primer matches in both reads are retained. 
 To increase the amount of retained reads, you can specify forward and reverse reads as separate units of one sample.
 
+- `reference` - path to unpacked reference genome in fasta format. 
+For non-model species selection of the reference balances between evolutionary proximity to the sample species and assembly quality. 
+You may want to experiment with various references in order to obtain better quality results.
+
 - `fq1` - forward or single-end reads fastq file (can be plain or gzipped).
 
 - `fq2` - reverse reads fastq file. Keep blank for single-end reads.
@@ -119,11 +123,6 @@ Configuration applied to the entire analysis in YAML format. Sections:
 
 - `samples` - path to tab-separated file with sample data.
 
-- `genome` - path to unpacked reference genome in fasta format. 
-For non-model species selection of the reference balances between evolutionary proximity to the sample species and assembly quality. 
-You may want to experiment with various references in order to obtain better quality results. 
-However, only a single reference genome per project is currently supported.
-
 - `rmdup` - whether to perform PCR duplicate removal, boolean. I
 n theory, should provide more sensible coverage statistics. 
 
@@ -133,7 +132,7 @@ n theory, should provide more sensible coverage statistics.
   - `cutadapt` - cutadapt general filtering options for paired-end (PE) and single-end (SE) reads. Default - trim terminal Ns and remove reads shorter than 20 bp.
   - `picard` - by default set to remove duplicates instead of marking them.
   - `filter` - alignment filtering:
-    - `min_mapq` - minimum mapping quality (use higher value for more stringent removal of repetitive mappings) 
+    - `min_mapq` - minimum mapping quality (use higher value for more stringent removal of repetitive mappings),
     - `min_len` - minimum mapping length (higher value help to avoid mapping errors at longer evolutionary distances).
 
 ### Other files
