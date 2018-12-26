@@ -1,0 +1,21 @@
+samples: samples.tsv
+
+# genome: genome/genome.fa
+
+# whether to remove PCR/optical duplicates
+rmdup: true
+
+params:
+  # maximum threads par task: bwa mem, samtools merge
+  threads: 1
+  cutadapt:
+    # common cutadapt parameters, per-library additional paramters are set by "amplification" in samples.tsv
+    pe: "--trim-n --minimum-length 20"
+    se: "--trim-n --minimum-length 20"
+  picard:
+    # duplicates are removed by default
+    MarkDuplicates: "-Xmx4G REMOVE_DUPLICATES=true"
+  filter:
+    # BAM filtering by mapping quality (MAPQ) and alignment length
+    # min_mapq: 20
+    # min_len: 20
