@@ -14,7 +14,7 @@ properties:
     description: sequencing platform
   adapters:
     type: string
-    enum: ["dop", "wga", "illumina", "none"] # "dop_relaxed", "wga_relaxed",
+    enum: ["dop", "wga", "dop_relaxed", "wga_relaxed", "illumina", "none"]
     description: adapters to remove 'dop' - DOP-PCR MW6 primer, 'wga' - WGA TG primer (both available in '_relaxed' versions), 'illumina' - standard Illumina adapters, 'none' - no specific adapters, just apply filtering
   fq1:
     type: string

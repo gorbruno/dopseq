@@ -42,10 +42,10 @@ def ampl_to_cutadapt_pe(wildcards):
     elif ampl == 'wga':
         return '-a TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -A TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -e 0.2 --discard-untrimmed'
     # relaxed versions - do not discard untrimmed
-    # elif ampl == 'dop_relaxed':
-    #     return '-a CCGACTCGAGNNNNNNATGTGG...CCACATNNNNNNCTCGAGTCGG -A CCGACTCGAGNNNNNNATGTGG...CCACATNNNNNNCTCGAGTCGG'
-    # elif ampl == 'wga_relaxed':
-    #     return '-a TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -A TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -e 0.2'
+    elif ampl == 'dop_relaxed':
+        return '-a CCGACTCGAGNNNNNNATGTGG...CCACATNNNNNNCTCGAGTCGG -A CCGACTCGAGNNNNNNATGTGG...CCACATNNNNNNCTCGAGTCGG'
+    elif ampl == 'wga_relaxed':
+        return '-a TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -A TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -e 0.2'
     elif ampl == 'illumina':
         return ' -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT'
     return ''
