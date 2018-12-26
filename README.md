@@ -3,9 +3,9 @@ Isolated chromosome sequencing analysis
 
 ## Introduction
 
-dopseq is a set of tools for processing high-throughput sequencing data generated from isolated (flow sorted or microdissected) chromosomes.
+dopseq is a set of tools for processing high-throughput sequencing data generated from isolated (flow sorted or microdissected) chromosomes. This project is a reimplementation of https://github.com/ilyakichigin/DOPseq_analyzer.  
 
-Current version implements chromosomal region prediction pipeline: 
+Current version includes chromosomal region prediction pipeline: 
 - read trimming and qc,
 - alignment to reference genome,
 - PCR duplicate and quality filtering, and finally
