@@ -10,8 +10,12 @@ configfile: "config.yaml"
 
 units = pd.read_table(config["samples"], dtype=str).set_index(["sample", "unit"], drop=False)
 units.index = units.index.set_levels([i.astype(str) for i in units.index.levels])  # enforce str in index
-units['prefix'] = units['sample'] + '-' + units['unit']
 validate(units, schema="../schemas/samples.schema.yaml")
+units['prefix'] = units['sample'] + '-' + units['unit']
+dupl_units = units['prefix'].duplicated()
+if dupl_units.any():
+    raise ValueError('Duplicated units detected: {}'.format(
+                        ' '.join(units.loc[dupl_units, 'prefix'].tolist())))
 
 
 ##### Wildcard constraints #####

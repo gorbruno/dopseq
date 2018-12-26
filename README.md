@@ -93,8 +93,8 @@ Tab-separated file with sample data. Columns:
 - `sample` - sample name used as prefix for the output files.
 
 - `unit` - multiple input units (lanes, libraries, biological replicates etc) can be specified for each sample. 
-Units are trimmed, aligned and filtered separately, so file prefixes for steps 0-5 include both sample and unit names separated by '-'. 
-Repeated setting of identical sample-unit combinations results in an obscure "ValueError: The truth value of a Series is ambiguous".
+Units are trimmed, aligned and filtered separately, so file prefixes are `{sample}-{unit}` for steps prior to bam merging.
+After bam merging, file prefixes are just `{sample}` 
 
 - `platform` - used to `@RG PL` field of the per-unit BAMs, merged BAM contains all `@RG` lines. 
 
