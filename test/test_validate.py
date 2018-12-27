@@ -1,4 +1,5 @@
 import pandas as pd
+import glob
 import sys
 import os
 
@@ -44,3 +45,13 @@ run_test(divergence_test,
 qual_test = ((sd.average_quality > 40) | (sd.average_quality < 20))
 run_test(qual_test,
          msg='ERROR: average mapq not within (20,40) for {}')
+
+print('Checking logs')
+for fn in glob.iglob(os.path.join(WD, 'results/logs/**/*.log'), recursive=True):
+    with open(fn) as f:
+        for l in f:
+            lowl = l.lower()
+            for s in ('error', 'warning'):
+                if s in lowl:
+                    print(fn + ':')
+                    sys.stdout.write(l)
