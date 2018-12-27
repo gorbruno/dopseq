@@ -89,6 +89,6 @@ echo 'Running dopseq complete'
 
 # validate results
 echo 'Running validation'
-#python test/test_validate.py $RUNDIR
+python test/test_validate.py $RUNDIR
 echo 'Validation complete'
 echo 'All done!'
