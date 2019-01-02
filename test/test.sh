@@ -10,8 +10,8 @@
 set -e
 
 CONDANAME=dopseq_test
-READDIR=../test_fastq
-GENOMEDIR=../test_genome
+READDIR=test_fastq
+GENOMEDIR=test_genome
 RUNDIR=$PWD
 
 # check directory
