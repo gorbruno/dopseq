@@ -1,0 +1,9 @@
+sample	unit	platform	adapters	reference	min_len	min_q	fq1	fq2
+B2_DOP_PE	lane1	ILLUMINA	dop	test_genome/Canis_familiaris.CanFam3.1.dna_sm.toplevel.fa	20	20	test_fastq/SRR7429930_1.fastq.gz	test_fastq/SRR7429930_1.fastq.gz
+B5_WGA_PE	lane1	ILLUMINA	wga	test_genome/Canis_familiaris.CanFam3.1.dna_sm.toplevel.fa	20	20	test_fastq/SRR7429928_1.fastq.gz	test_fastq/SRR7429928_2.fastq.gz
+B2_DOP_RELAXED_PE	lane1	ILLUMINA	dop_relaxed	test_genome/Canis_familiaris.CanFam3.1.dna_sm.toplevel.fa	20	20	test_fastq/SRR7429930_1.fastq.gz	test_fastq/SRR7429930_1.fastq.gz
+B5_WGA_RELAXED_PE	lane1	ILLUMINA	wga_relaxed	test_genome/Canis_familiaris.CanFam3.1.dna_sm.toplevel.fa	20	20	test_fastq/SRR7429928_1.fastq.gz	test_fastq/SRR7429928_2.fastq.gz
+B5_ILNM_SE	lane1	ILLUMINA	illumina	test_genome/Canis_familiaris.CanFam3.1.dna_sm.toplevel.fa	20	20	test_fastq/SRR7429928_1.fastq.gz	
+B5_ILNM_SE	lane2	ILLUMINA	illumina	test_genome/Canis_familiaris.CanFam3.1.dna_sm.toplevel.fa	20	20	test_fastq/SRR7429928_2.fastq.gz	
+B2_NOTRIM_SE	lane1	ILLUMINA	illumina	test_genome/Canis_familiaris.CanFam3.1.dna_sm.toplevel.fa	20	20	test_fastq/SRR7429930_1.fastq.gz	
+B2_NOTRIM_SE	lane2	ILLUMINA	illumina	test_genome/Canis_familiaris.CanFam3.1.dna_sm.toplevel.fa	20	20	test_fastq/SRR7429930_1.fastq.gz	

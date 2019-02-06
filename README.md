@@ -18,7 +18,7 @@ This software relies on [Snakemake](https://snakemake.readthedocs.io/en/stable/)
 First, install snakemake using [conda](https://conda.io/docs/user-guide/install/index.html)
 
 ```
-conda install -c bioconda -c conda-forge snakemake
+conda install -c bioconda -c conda-forge snakemake\>=5.2.0
 ```
 
 Clone dopseq and go to its directory
@@ -150,4 +150,6 @@ For further reading, please refer to [Snakemake documentation](https://snakemake
 
 `env.yaml` lists all conda packages and their versions.
 
-`schemas` include files for testing `config.yaml` and `samples.tsv`.
+`schemas` folder includes files for testing `config.yaml` and `samples.tsv`.
+
+`test` folder contains tests of dopseq functionality, including whole pipeline run on fox B chromosome data and sanity checks of the output files. Test can be run from the dopseq folder with `./test/test.sh`.  
