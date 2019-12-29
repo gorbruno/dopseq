@@ -43,8 +43,8 @@ rule trim_reads_pe:
         ampl_to_cutadapt_pe, config["params"]["cutadapt"]["pe"]
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
-    # conda:
-    #     "../env.yaml"
+    conda:
+        "../env.yaml"
     shell:
         "cutadapt"
         " {params}"
