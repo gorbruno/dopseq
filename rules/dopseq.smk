@@ -1,10 +1,11 @@
-# trimming reads
+# fastqc uses smk wrapper to avoid duplication of lengthy rules
 rule fastqc_init:
     input:
         get_fastq
     output:
         html="results/0_fastqc_init/{sample}-{unit}.html",
         zip="results/0_fastqc_init/{sample}-{unit}.zip"
+    # usable with custom shell
     # params:
     #     dir="results/0_fastqc_init/"
     # conda:
@@ -58,6 +59,7 @@ rule fastqc_trimmed:
     output:
         html="results/2_fastqc_trim/{sample}-{unit}.html",
         zip="results/2_fastqc_trim/{sample}-{unit}.zip"
+    # usable with custom shell
     # params:
     #     dir="results/2_fastqc_trim/"
     # conda:

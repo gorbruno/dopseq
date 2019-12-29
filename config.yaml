@@ -1,7 +1,5 @@
 samples: samples.tsv
 
-# genome: genome/genome.fa
-
 # whether to remove PCR/optical duplicates
 rmdup: true
 
