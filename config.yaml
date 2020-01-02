@@ -1,5 +1,7 @@
 samples: samples.tsv
 
+# genome: genome/genome.fa
+
 # whether to remove PCR/optical duplicates
 rmdup: true
 
@@ -12,7 +14,7 @@ params:
     se: "--trim-n --minimum-length 20"
   picard:
     # duplicates are removed by default
-    MarkDuplicates: "REMOVE_DUPLICATES=true"
+    MarkDuplicates: "-Xmx4G REMOVE_DUPLICATES=true"
   filter:
     # BAM filtering by mapping quality (MAPQ) and alignment length
     # min_mapq: 20
