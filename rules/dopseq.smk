@@ -117,8 +117,7 @@ rule map_reads_bwa_mem:
         "{input.reads} "
         "2> {log.mem} | "
         "samtools sort - "
-        "-o {output} &> {log.sort}; "
-        "samtools stats {output.bam} > {output.metrics}"
+        "-o {output} &> {log.sort} "
 
 # alignment filtering and merging
 rule mark_duplicates:
