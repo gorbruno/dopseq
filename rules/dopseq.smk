@@ -99,7 +99,7 @@ rule map_reads_bwa_mem:
         reads=get_trimmed_reads,
         index=get_ref_bwt
     output:
-        "results/3_mapped/{sample}-{unit}.sorted.bam"
+        bam="results/3_mapped/{sample}-{unit}.sorted.bam"
     log:
         mem="results/logs/bwa_mem/{sample}-{unit}.log",
         sort="results/logs/samtools_sort/{sample}-{unit}.log",
@@ -117,7 +117,8 @@ rule map_reads_bwa_mem:
         "{input.reads} "
         "2> {log.mem} | "
         "samtools sort - "
-        "-o {output} &> {log.sort}"
+        "-o {output} &> {log.sort}; "
+        "samtools stats {output.bam} > {output.metrics}"
 
 # alignment filtering and merging
 rule mark_duplicates:
@@ -139,10 +140,9 @@ rule mark_duplicates:
 
 rule samtools_filter:
     input:
-        ("results/4_dedup/{sample}-{unit}.bam" 
-            if config["workflow"]["do_rmdup"] else 
-            "results/3_mapped/{sample}-{unit}.bam")
-        
+        "results/4_dedup/{sample}-{unit}.bam" 
+        # if config["workflow"]["do_rmdup"] else 
+        # "results/3_mapped/{sample}-{unit}.sorted.bam")    
     output:
         bam="results/5_filtered/{sample}-{unit}.bam",
         metrics="results/5_filtered/{sample}-{unit}.filter.txt"
@@ -200,7 +200,7 @@ rule stats:
     params:
         samples=config["samples"],
         trim="results/1_trimmed",
-        dedup="results/4_dedup",
+        dedup="results/4_dedup" #if config["workflow"]["do_rmdup"] else None),
         flt="results/5_filtered",
         pos="results/7_positions/"
     conda:

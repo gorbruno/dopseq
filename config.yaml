@@ -1,8 +1,6 @@
 samples: samples.tsv
 
 workflow:
-  # whether to remove PCR/optical duplicates
-  do_rmdup: true
   # whether to plot regions:
   # not recommended for highly fragmented reference assemblies
   do_plot_reg: true
