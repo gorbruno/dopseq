@@ -6,17 +6,19 @@ workflow:
   do_plot_reg: true
 
 params:
-  # maximum threads par task: bwa mem, samtools merge
+  # maximum threads par task.
+  # Applicable to bwa mem, samtools merge
   threads: 1
+  # additional parameters to cutadapt
   cutadapt:
     # common cutadapt parameters, 
     # per-library additional paramters are set by 
     # "amplification" parameter in samples.tsv
     pe: "--trim-n --minimum-length 20"
     se: "--trim-n --minimum-length 20"
-  picard:
-    # duplicates are removed by default
-    MarkDuplicates: "-Xmx4G REMOVE_DUPLICATES=true"
+  # additional parameters to Picard
+  picard_MarkDuplicates: "-Xmx4G"
+  # additional parameters to plotting script
   region:
     # plotting parameters, dims in inches
     plot_ncols: 8

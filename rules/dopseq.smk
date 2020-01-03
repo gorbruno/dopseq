@@ -3,8 +3,8 @@ rule fastqc_init:
     input:
         get_fastq
     output:
-        html="results/0_fastqc_init/{sample}-{unit}.html",
-        zip="results/0_fastqc_init/{sample}-{unit}.zip"
+        html="results/0_fastqc_init/{sample}-{unit}.qc_init.html",
+        zip="results/0_fastqc_init/{sample}-{unit}.qc_init.zip"
     # usable with custom shell
     # params:
     #     dir="results/0_fastqc_init/"
@@ -38,7 +38,7 @@ rule trim_reads_pe:
     output:
         fastq1="results/1_trimmed/{sample}-{unit}.1.fastq.gz",
         fastq2="results/1_trimmed/{sample}-{unit}.2.fastq.gz",
-        qc="results/1_trimmed/{sample}-{unit}.trim.txt"
+        stats="results/1_trimmed/{sample}-{unit}.trim.txt"
     params:
         ampl_to_cutadapt_pe, config["params"]["cutadapt"]["pe"]
     log:
@@ -51,14 +51,14 @@ rule trim_reads_pe:
         " -o {output.fastq1}"
         " -p {output.fastq2}"
         " {input}"
-        " > {output.qc} 2> {log}"
+        " > {output.stats} 2> {log}"
 
 rule fastqc_trimmed:
     input:
         get_trimmed_reads
     output:
-        html="results/2_fastqc_trim/{sample}-{unit}.html",
-        zip="results/2_fastqc_trim/{sample}-{unit}.zip"
+        html="results/2_fastqc_trim/{sample}-{unit}.qc_trim.html",
+        zip="results/2_fastqc_trim/{sample}-{unit}.qc_trim.zip"
     # usable with custom shell
     # params:
     #     dir="results/2_fastqc_trim/"
@@ -125,26 +125,28 @@ rule mark_duplicates:
     input:
         "results/3_mapped/{sample}-{unit}.sorted.bam"
     output:
-        bam=temp("results/4_dedup/{sample}-{unit}.bam"),
+        bam=temp("results/4_dedup/{sample}-{unit}.dedup.bam"),
         metrics="results/4_dedup/{sample}-{unit}.dedup.txt"
     log:
-        "results/logs/picard/dedup/{sample}-{unit}.log"
+        "results/logs/picard_dedup/{sample}-{unit}.log"
     params:
-        config["params"]["picard"]["MarkDuplicates"]
+        config["params"]["picard_MarkDuplicates"]
     conda:
         "../env.yaml"
     shell:
-        "picard MarkDuplicates {params} INPUT={input} "
-        "OUTPUT={output.bam} METRICS_FILE={output.metrics} "
-        "&> {log}"
+        "picard MarkDuplicates {params} "
+        " REMOVE_DUPLICATES=true "
+        " INPUT={input} OUTPUT={output.bam} "
+        " METRICS_FILE={output.metrics} "
+        " &> {log}"
 
 rule samtools_filter:
     input:
-        "results/4_dedup/{sample}-{unit}.bam" 
+        "results/4_dedup/{sample}-{unit}.dedup.bam" 
         # if config["workflow"]["do_rmdup"] else 
         # "results/3_mapped/{sample}-{unit}.sorted.bam")    
     output:
-        bam="results/5_filtered/{sample}-{unit}.bam",
+        bam="results/5_filtered/{sample}-{unit}.filter.bam",
         metrics="results/5_filtered/{sample}-{unit}.filter.txt"
     params:
         minq=get_min_q,
@@ -169,7 +171,7 @@ rule samtools_merge:
         "../env.yaml"
     shell:
         "samtools merge --threads {threads} {params} "
-        "{output} {input}"
+        " {output} {input}"
 
 # regions
 rule regions:
