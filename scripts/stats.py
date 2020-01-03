@@ -75,8 +75,8 @@ def get_lane_stats(lane_data):
     prefix = "{}-{}".format(lane_data['sample'], lane_data['unit'])
     lane_stats = dict()
     lane_stats.update(get_trim_stats(os.path.join(trim_dir, prefix + trim_suffix))) # qc->trim
-    if dedup_done:
-        lane_stats.update(get_dedup_stats(os.path.join(dedup_dir, prefix + dedup_suffix)))
+    # if dedup_done:
+    lane_stats.update(get_dedup_stats(os.path.join(dedup_dir, prefix + dedup_suffix)))
     lane_stats.update(get_filtered_stats(os.path.join(filtered_dir, prefix + filtered_suffix)))
     for stat in lane_stats.keys():
         try:

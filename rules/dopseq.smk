@@ -1,4 +1,4 @@
-# fastqc uses smk wrapper to avoid duplication of lengthy rules
+# we use smk wrapper for fastqc to avoid duplication of lengthy rules
 rule fastqc_init:
     input:
         get_fastq
@@ -182,7 +182,7 @@ rule regions:
     params:
         sample="{sample}",
         do_plot_reg=config["workflow"]["do_plot_reg"],
-        plot="results/8_regions/{sample}.reg.pdf", d
+        plot="results/8_regions/{sample}.reg.pdf",
         plot_ncols=config["params"]["region"]["plot_ncols"],
         plot_chrom_height=config["params"]["region"]["plot_chrom_height"],
         plot_chrom_width=config["params"]["region"]["plot_chrom_width"]
@@ -200,7 +200,7 @@ rule stats:
     params:
         samples=config["samples"],
         trim="results/1_trimmed",
-        dedup="results/4_dedup" #if config["workflow"]["do_rmdup"] else None),
+        dedup="results/4_dedup", #if config["workflow"]["do_rmdup"] else None),
         flt="results/5_filtered",
         pos="results/7_positions/"
     conda:

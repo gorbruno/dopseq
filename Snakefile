@@ -12,4 +12,4 @@ rule all:
 
 
 ##### Modules #####
-include: "rules/dopseq.smk" 
+include: "rules/dopseq.smk"

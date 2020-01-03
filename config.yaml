@@ -19,8 +19,8 @@ params:
     MarkDuplicates: "-Xmx4G REMOVE_DUPLICATES=true"
   filter:
     # BAM filtering by mapping quality (MAPQ) and alignment length
-    # min_mapq: 20
-    # min_len: 20
+    min_mapq: 20
+    min_len: 20
   region:
     # plotting parameters, dims in inches
     plot_ncols: 8
