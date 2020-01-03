@@ -1,15 +1,19 @@
 samples: samples.tsv
 
-# genome: genome/genome.fa
-
-# whether to remove PCR/optical duplicates
-rmdup: true
+workflow:
+  # whether to remove PCR/optical duplicates
+  do_rmdup: true
+  # whether to plot regions:
+  # not recommended for highly fragmented reference assemblies
+  do_plot_reg: true
 
 params:
   # maximum threads par task: bwa mem, samtools merge
   threads: 1
   cutadapt:
-    # common cutadapt parameters, per-library additional paramters are set by "amplification" in samples.tsv
+    # common cutadapt parameters, 
+    # per-library additional paramters are set by 
+    # "amplification" parameter in samples.tsv
     pe: "--trim-n --minimum-length 20"
     se: "--trim-n --minimum-length 20"
   picard:
@@ -19,3 +23,8 @@ params:
     # BAM filtering by mapping quality (MAPQ) and alignment length
     # min_mapq: 20
     # min_len: 20
+  region:
+    # plotting parameters, dims in inches
+    plot_ncols: 8
+    plot_chrom_height: 2
+    plot_chrom_width: 3

@@ -176,16 +176,21 @@ rule regions:
         genome_fai=get_ref_fai
     output:
         pos="results/7_positions/{sample}.bed",
-        reg="results/8_regions/{sample}.tsv"
+        reg="results/8_regions/{sample}.reg.tsv"
     params:
-        sample="{sample}"
+        sample="{sample}",
+        do_plot_reg=config["workflow"]["do_plot_reg"],
+        plot="results/8_regions/{sample}.reg.pdf",
+        plot_ncols=config["region"]["plot_ncols"],
+        plot_chrom_height=config["region"]["plot_chrom_height"],
+        plot_chrom_width=config["region"]["plot_chrom_width"]
     conda:
         "../env.yaml"
     script:
         "../scripts/regions.py"
 
 # statistics
-rule stats:
+rule stats: 
     input:
         get_position_beds
     output:
