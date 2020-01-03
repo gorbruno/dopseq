@@ -182,7 +182,7 @@ rule regions:
     params:
         sample="{sample}",
         do_plot_reg=config["workflow"]["do_plot_reg"],
-        plot="results/8_regions/{sample}.reg.pdf",
+        plot="results/8_regions/{sample}.reg.pdf", d
         plot_ncols=config["params"]["region"]["plot_ncols"],
         plot_chrom_height=config["params"]["region"]["plot_chrom_height"],
         plot_chrom_width=config["params"]["region"]["plot_chrom_width"]

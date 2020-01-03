@@ -231,6 +231,7 @@ if __name__ == "__main__":
     genome_fai = str(snakemake.input.genome_fai) # for some reason read as snakemake.io.Namedlist
     out_pos = snakemake.output.pos
     out_reg = snakemake.output.reg
+    out_plot = 
     sample = snakemake.params.sample
     chrom_lens = read_fai(genome_fai)
     (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos, chrom_lens)
