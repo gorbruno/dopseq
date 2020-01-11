@@ -67,7 +67,7 @@ rule fastqc_trimmed:
     wrapper:
         "0.27.1/bio/fastqc"
 
-# genome preparation and alignment
+# genome preparation done in the input dir
 rule bwa_index:
     input:
         "{genome}"
@@ -79,10 +79,12 @@ rule bwa_index:
         "{genome}.sa"
     conda:
         "../env.yaml"
+    log:
+        "{genome}.bwa_index.log"
     shell:
         "bwa index"
         " -p {input}"
-        " {input}"
+        " {input} &> {log}"
 
 rule samtools_faidx:
     input:
