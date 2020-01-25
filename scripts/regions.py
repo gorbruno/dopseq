@@ -12,7 +12,7 @@ from rpy2.robjects.packages import importr
 from scipy.stats import binom_test
 
 
-def read_fai(gneome_fai): 
+def read_fai(genome_fai): 
     """
     chromosome sizes from fasta index
     chromosome : (0, chromosome_length)
@@ -27,22 +27,32 @@ def read_fai(gneome_fai):
                 pass
     return chrom_lens
 
-def bam_to_pos_and_dist(in_bam, out_pos):
-    # positions and distances between positions
+def bam_to_pos_and_dist(in_bam, out_pos, chrom_lens):
+    """Convert BAM into positions and 
+       distances between positions"""
+
     in_bam = pybedtools.BedTool(in_bam)
-    # positions - merged overlapping reads
-    pos_bed = in_bam.bam_to_bed().sort().merge(c=1, o='count').saveas(out_pos)
-    pos = pos_bed.to_dataframe()
-    pos['chrom'] = pos['chrom'].astype(str)
-    # distance - complement of positions, i.e. end-to-start distances between positions
-    dist = pos_bed.complement(g=chrom_lens).to_dataframe()
-    dist['chrom'] = dist['chrom'].astype(str)
-    # logscale end-to-start distances
-    dist['log.dist'] = np.log10(dist['end'] - dist['start'])
+    # non-empty BAM
+    if in_bam.count() > 0:
+        # positions - merged overlapping reads
+        pos_bed = in_bam.bam_to_bed().sort().merge(c=1, o='count').saveas(out_pos)
+        pos = pos_bed.to_dataframe()
+        pos['chrom'] = pos['chrom'].astype(str)
+        # distance - complement of positions, i.e. end-to-start distances between positions
+        dist = pos_bed.complement(g=chrom_lens).to_dataframe()
+        dist['chrom'] = dist['chrom'].astype(str)
+        # logscale end-to-start distances
+        dist['log.dist'] = np.log10(dist['end'] - dist['start'])
 
-    return (pos, dist)
+        return (pos, dist)
+    # empty BAM
+    else:
+        # touch positions
+        open(out_pos, 'w').close()
 
-def segment_genome(dist, sample):
+        return (None, None)
+
+def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2):
     """
     Segmentation of genome based on logscale distances between read positions
     with DNAcopy circular binary segmentation algorithm.
@@ -56,6 +66,27 @@ def segment_genome(dist, sample):
                             data_type="logratio", sample=sample)
     cna = robjects.r['smooth.CNA'](cna)
     segm = robjects.r['segment'](cna, verbose=0)
+
+    # plotting
+    if do_plot_reg:
+        nchrom = dist['chrom'].nunique()
+        # set up figure dimensions
+        ncols = ncols
+        nrows = int(nchrom / ncols) + (nchrom % ncols > 0)
+        dims = robjects.IntVector([nrows, ncols])
+        height = nrows * hipc
+        width = ncols * wipc
+        # set ylimits to meaningful for PD
+        ymax = dist['log.dist'].max()
+        ylim = robjects.FloatVector([0, ymax])
+        grdevices = importr('grDevices')
+        grdevices.pdf(file=out_plot, width=width, height=height)
+        # S3 object - determined by first argument
+        robjects.r['plot'](segm, **{'plot.type':'s', 
+                                    'ylim':ylim,
+                                    'sbyc.layout':dims,
+                                    'xmaploc':True})
+        grdevices.dev_off()
 
     # convert to pandas dataframe
     pandas2ri.activate()
@@ -210,10 +241,23 @@ if __name__ == "__main__":
     genome_fai = str(snakemake.input.genome_fai) # for some reason read as snakemake.io.Namedlist
     out_pos = snakemake.output.pos
     out_reg = snakemake.output.reg
+    do_plot_reg = snakemake.params.do_plot_reg
+    out_plot = snakemake.params.plot
     sample = snakemake.params.sample
     chrom_lens = read_fai(genome_fai)
-    (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos)
-    regions = segment_genome(dist, sample)
-    regions = shift_regions(regions, pos, chrom_lens)
-    regions = regions_stats(regions, chrom_lens)
-    regions.to_csv(out_reg, sep="\t", index=False)
+    (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos, chrom_lens)
+    # empty BAM - touch remaining outputs
+    if pos is None:
+        open(out_reg, 'w').close()
+        if do_plot_reg:
+            open(out_plot, 'w').close()
+    else:
+        regions = segment_genome(dist, sample,
+                                 do_plot_reg,
+                                 out_plot,
+                                 snakemake.params.plot_ncols,
+                                 snakemake.params.plot_chrom_height,
+                                 snakemake.params.plot_chrom_width)
+        regions = shift_regions(regions, pos, chrom_lens)
+        regions = regions_stats(regions, chrom_lens)
+        regions.to_csv(out_reg, sep="\t", index=False)

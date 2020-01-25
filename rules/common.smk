@@ -110,7 +110,7 @@ def get_min_q(wildcards):
 
 def get_filtered_bams(wildcards):
     """Get all per-unit alignments of given sample"""
-    return expand("results/5_filtered/{sample}-{unit}.bam",
+    return expand("results/5_filtered/{sample}-{unit}.filter.bam",
                   sample=wildcards.sample,
                   unit=units.loc[wildcards.sample].unit)
 

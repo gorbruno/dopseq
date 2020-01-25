@@ -1,10 +1,11 @@
-# trimming reads
+# we use smk wrapper for fastqc to avoid duplication of lengthy rules
 rule fastqc_init:
     input:
         get_fastq
     output:
-        html="results/0_fastqc_init/{sample}-{unit}.html",
-        zip="results/0_fastqc_init/{sample}-{unit}.zip"
+        html="results/0_fastqc_init/{sample}-{unit}.qc_init.html",
+        zip="results/0_fastqc_init/{sample}-{unit}.qc_init.zip"
+    # usable with custom shell
     # params:
     #     dir="results/0_fastqc_init/"
     # conda:
@@ -37,27 +38,28 @@ rule trim_reads_pe:
     output:
         fastq1="results/1_trimmed/{sample}-{unit}.1.fastq.gz",
         fastq2="results/1_trimmed/{sample}-{unit}.2.fastq.gz",
-        qc="results/1_trimmed/{sample}-{unit}.trim.txt"
+        stats="results/1_trimmed/{sample}-{unit}.trim.txt"
     params:
         ampl_to_cutadapt_pe, config["params"]["cutadapt"]["pe"]
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
-    # conda:
-    #     "../env.yaml"
+    conda:
+        "../env.yaml"
     shell:
         "cutadapt"
         " {params}"
         " -o {output.fastq1}"
         " -p {output.fastq2}"
         " {input}"
-        " > {output.qc} 2> {log}"
+        " > {output.stats} 2> {log}"
 
 rule fastqc_trimmed:
     input:
         get_trimmed_reads
     output:
-        html="results/2_fastqc_trim/{sample}-{unit}.html",
-        zip="results/2_fastqc_trim/{sample}-{unit}.zip"
+        html="results/2_fastqc_trim/{sample}-{unit}.qc_trim.html",
+        zip="results/2_fastqc_trim/{sample}-{unit}.qc_trim.zip"
+    # usable with custom shell
     # params:
     #     dir="results/2_fastqc_trim/"
     # conda:
@@ -65,7 +67,7 @@ rule fastqc_trimmed:
     wrapper:
         "0.27.1/bio/fastqc"
 
-# genome preparation and alignment
+# genome preparation done in the input dir
 rule bwa_index:
     input:
         "{genome}"
@@ -77,10 +79,12 @@ rule bwa_index:
         "{genome}.sa"
     conda:
         "../env.yaml"
+    log:
+        "{genome}.bwa_index.log"
     shell:
         "bwa index"
         " -p {input}"
-        " {input}"
+        " {input} &> {log}"
 
 rule samtools_faidx:
     input:
@@ -97,7 +101,7 @@ rule map_reads_bwa_mem:
         reads=get_trimmed_reads,
         index=get_ref_bwt
     output:
-        "results/3_mapped/{sample}-{unit}.sorted.bam"
+        bam="results/3_mapped/{sample}-{unit}.sorted.bam"
     log:
         mem="results/logs/bwa_mem/{sample}-{unit}.log",
         sort="results/logs/samtools_sort/{sample}-{unit}.log",
@@ -115,32 +119,35 @@ rule map_reads_bwa_mem:
         "{input.reads} "
         "2> {log.mem} | "
         "samtools sort - "
-        "-o {output} &> {log.sort}"
+        "-o {output} &> {log.sort} "
 
 # alignment filtering and merging
 rule mark_duplicates:
     input:
         "results/3_mapped/{sample}-{unit}.sorted.bam"
     output:
-        bam=temp("results/4_dedup/{sample}-{unit}.bam"),
+        bam=temp("results/4_dedup/{sample}-{unit}.dedup.bam"),
         metrics="results/4_dedup/{sample}-{unit}.dedup.txt"
     log:
-        "results/logs/picard/dedup/{sample}-{unit}.log"
+        "results/logs/picard_dedup/{sample}-{unit}.log"
     params:
-        config["params"]["picard"]["MarkDuplicates"]
+        config["params"]["picard_MarkDuplicates"]
     conda:
         "../env.yaml"
     shell:
-        "picard MarkDuplicates {params} INPUT={input} "
-        "OUTPUT={output.bam} METRICS_FILE={output.metrics} "
-        "&> {log}"
+        "picard MarkDuplicates {params} "
+        " REMOVE_DUPLICATES=true "
+        " INPUT={input} OUTPUT={output.bam} "
+        " METRICS_FILE={output.metrics} "
+        " &> {log}"
 
 rule samtools_filter:
     input:
-        # get_dedup_bams
-        "results/4_dedup/{sample}-{unit}.bam"
+        "results/4_dedup/{sample}-{unit}.dedup.bam" 
+        # if config["workflow"]["do_rmdup"] else 
+        # "results/3_mapped/{sample}-{unit}.sorted.bam")    
     output:
-        bam="results/5_filtered/{sample}-{unit}.bam",
+        bam="results/5_filtered/{sample}-{unit}.filter.bam",
         metrics="results/5_filtered/{sample}-{unit}.filter.txt"
     params:
         minq=get_min_q,
@@ -165,7 +172,7 @@ rule samtools_merge:
         "../env.yaml"
     shell:
         "samtools merge --threads {threads} {params} "
-        "{output} {input}"
+        " {output} {input}"
 
 # regions
 rule regions:
@@ -174,16 +181,21 @@ rule regions:
         genome_fai=get_ref_fai
     output:
         pos="results/7_positions/{sample}.bed",
-        reg="results/8_regions/{sample}.tsv"
+        reg="results/8_regions/{sample}.reg.tsv"
     params:
-        sample="{sample}"
+        sample="{sample}",
+        do_plot_reg=config["workflow"]["do_plot_reg"],
+        plot="results/8_regions/{sample}.reg.pdf",
+        plot_ncols=config["params"]["region"]["plot_ncols"],
+        plot_chrom_height=config["params"]["region"]["plot_chrom_height"],
+        plot_chrom_width=config["params"]["region"]["plot_chrom_width"]
     conda:
         "../env.yaml"
     script:
         "../scripts/regions.py"
 
 # statistics
-rule stats:
+rule stats: 
     input:
         get_position_beds
     output:
@@ -191,7 +203,7 @@ rule stats:
     params:
         samples=config["samples"],
         trim="results/1_trimmed",
-        dedup="results/4_dedup",
+        dedup="results/4_dedup", #if config["workflow"]["do_rmdup"] else None),
         flt="results/5_filtered",
         pos="results/7_positions/"
     conda:
