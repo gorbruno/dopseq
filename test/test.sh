@@ -36,7 +36,8 @@ else
 	echo 'Skipping test environment intallation'
 fi
 
-source activate $CONDANAME
+eval "$(conda shell.bash hook)"
+conda activate $CONDANAME
 
 # download example reads
 if [[ ! -f test/reads.downloaded ]]; then
