@@ -76,16 +76,17 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2)
         dims = robjects.IntVector([nrows, ncols])
         height = nrows * hipc
         width = ncols * wipc
-        # set ylimits to meaningful for PD
+        # set ylimits to meaningful for PD - less than 0 not expected
         ymax = dist['log.dist'].max()
         ylim = robjects.FloatVector([0, ymax])
         grdevices = importr('grDevices')
         grdevices.pdf(file=out_plot, width=width, height=height)
         # S3 object - determined by first argument
-        robjects.r['plot'](segm, **{'plot.type':'s', 
-                                    'ylim':ylim,
-                                    'sbyc.layout':dims,
-                                    'xmaploc':True})
+        robjects.r['plot'](segm, 
+                            plot_type='s',
+                            ylim=ylim,
+                            sbyc_layout=dims,
+                            xmaploc=True)
         grdevices.dev_off()
 
     # convert to pandas dataframe
