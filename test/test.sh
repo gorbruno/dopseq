@@ -36,8 +36,9 @@ else
 	echo 'Skipping test environment intallation'
 fi
 
-eval "$(conda shell.bash hook)"
-conda activate $CONDANAME
+# activate wrapper env
+# this will work only if conda bin dir is in $PATH
+source activate $CONDANAME
 
 # download example reads
 if [[ ! -f test/reads.downloaded ]]; then
