@@ -6,3 +6,5 @@ dag.pdf
 test/env.installed
 test/genome.downloaded
 test/reads.downloaded
+test_fastq/
+test_genome/
