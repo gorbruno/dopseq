@@ -29,13 +29,13 @@ run_test(sd, trim_test,
 trim_bp_test = (sd.total_bp < sd.trimmed_bp)
 run_test(sd, trim_bp_test,
          msg='ERROR: total bp < trimmed bp for {}')
-mapped_test = (sd.trimmed_reads < sd.mapped_reads)
+mapped_test = (sd.trimmed_reads < sd.total_mapped_reads)
 run_test(sd, mapped_test,
          'ERROR: less trimmed reads than mapped reads for {}')
-duplicated_test = (sd.mapped_reads < sd.duplicated_reads)
+duplicated_test = (sd.total_mapped_reads < sd.duplicated_reads)
 run_test(sd, duplicated_test,
          msg='ERROR: less mapped reads than duplicated reads for {}')
-filter_test = ((sd.mapped_reads - sd.duplicated_reads) < sd.mapped_reads_after_filter)
+filter_test = ((sd.total_mapped_reads - sd.duplicated_reads) < sd.mapped_reads_after_filter)
 run_test(sd, filter_test,
          msg='ERROR: too many reads remaining after duplicate removal and filtering for {}')
 filter_bp_test = (sd.trimmed_bp < sd.mapped_bp_after_filter)
