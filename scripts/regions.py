@@ -59,16 +59,21 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2)
     Outputs predicted regions with different mean distances between positions (pd_mean)
     """
     # R code for segmentation
+    print('- importing DNAcopy')
     dnacopy = importr('DNAcopy')
+    print('- reading distance data')
     cna = robjects.r['CNA'](robjects.FloatVector(dist['log.dist']),
                             robjects.StrVector(dist['chrom']), 
                             robjects.IntVector(dist['end']), # end of dist = start of pos
                             data_type="logratio", sample=sample)
+    print('- smoothing distance data')
     cna = robjects.r['smooth.CNA'](cna)
+    print('- segmenting')
     segm = robjects.r['segment'](cna, verbose=0)
 
     # plotting
     if do_plot_reg:
+        print('- plotting')
         nchrom = dist['chrom'].nunique()
         # set up figure dimensions
         ncols = ncols
@@ -90,6 +95,7 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2)
         grdevices.dev_off()
 
     # convert to pandas dataframe
+    print('- converting results to pandas df')
     pandas2ri.activate()
     regions = robjects.pandas2ri.ri2py(segm[1])
     
@@ -245,20 +251,28 @@ if __name__ == "__main__":
     do_plot_reg = snakemake.params.do_plot_reg
     out_plot = snakemake.params.plot
     sample = snakemake.params.sample
+    print('Reading chromosome lengths from fai')
     chrom_lens = read_fai(genome_fai)
+    print('Converting BAM to positions and distances between positions')
     (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos, chrom_lens)
     # empty BAM - touch remaining outputs
     if pos is None:
+        print('No reads - creating empty output files')
         open(out_reg, 'w').close()
         if do_plot_reg:
             open(out_plot, 'w').close()
     else:
+        print('Segmenting the genome with DNAcopy')
         regions = segment_genome(dist, sample,
                                  do_plot_reg,
                                  out_plot,
                                  snakemake.params.plot_ncols,
                                  snakemake.params.plot_chrom_height,
                                  snakemake.params.plot_chrom_width)
+        print('Correcting and annotating the segments')
         regions = shift_regions(regions, pos, chrom_lens)
+        print('Collecting statistics')
         regions = regions_stats(regions, chrom_lens)
+        print('Writing output')
         regions.to_csv(out_reg, sep="\t", index=False)
+        print('Done!')
