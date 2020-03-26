@@ -62,14 +62,14 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2)
     print('- importing DNAcopy')
     dnacopy = importr('DNAcopy')
     print('- reading distance data')
-    cna = robjects.r['CNA'](robjects.FloatVector(dist['log.dist']),
+    cna = dnacopy.CNA(robjects.FloatVector(dist['log.dist']),
                             robjects.StrVector(dist['chrom']), 
                             robjects.IntVector(dist['end']), # end of dist = start of pos
                             data_type="logratio", sample=sample)
     print('- smoothing distance data')
-    cna = robjects.r['smooth.CNA'](cna)
+    cna = dnacopy.smooth_CNA(cna)
     print('- segmenting')
-    segm = robjects.r['segment'](cna, verbose=0)
+    segm = dnacopy.segment(cna, verbose=0)
 
     # plotting
     if do_plot_reg:
@@ -78,6 +78,23 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2)
         # set up figure dimensions
         ncols = ncols
         nrows = int(nchrom / ncols) + (nchrom % ncols > 0)
+        # need to limit nrows in plot, limiting number of plotted seqids
+        if nrows > 200:
+            nrows = 200
+            plot_nchrom = ncols * nrows
+            print('WARNING: too many sequences in reference, '
+                  're-segmenting and plotting first {}'.format(plot_nchrom))
+            plot_chrom = dist['chrom'].drop_duplicates().iloc[:plot_nchrom]
+            plot_dist = dist[dist['chrom'].isin(plot_chrom)]
+            plot_cna = dnacopy.CNA(robjects.FloatVector(plot_dist['log.dist']),
+                            robjects.StrVector(plot_dist['chrom']), 
+                            robjects.IntVector(plot_dist['end']), # end of dist = start of pos
+                            data_type="logratio", sample=sample)
+            plot_cna = dnacopy.smooth_CNA(plot_cna)
+            plot_segm = dnacopy.segment(plot_cna, verbose=0)
+        # no limit
+        else:
+            plot_segm = segm
         dims = robjects.IntVector([nrows, ncols])
         height = nrows * hipc
         width = ncols * wipc
@@ -87,7 +104,7 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2)
         grdevices = importr('grDevices')
         grdevices.pdf(file=out_plot, width=width, height=height)
         # S3 object - determined by first argument
-        robjects.r['plot'](segm, 
+        dnacopy.plot_DNAcopy(plot_segm, 
                             plot_type='s',
                             ylim=ylim,
                             sbyc_layout=dims,
