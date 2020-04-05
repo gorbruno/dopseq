@@ -52,7 +52,10 @@ def ampl_to_cutadapt_pe(wildcards):
         return '-a TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -A TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -e 0.2'
     elif ampl == 'illumina':
         return ' -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT'
-    return ''
+    elif ampl == 'none':
+        return ''
+    else:
+        raise ValueError('Unknown adapters: {}'.format(ampl))
 
 def ampl_to_cutadapt_se(wildcards):
 
@@ -70,7 +73,10 @@ def ampl_to_cutadapt_se(wildcards):
     #     return '-g TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -e 0.2'
     elif ampl == 'illumina':
         return ' -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
-    return ''
+    elif ampl == 'none':
+        return ''
+    else:
+        raise ValueError('Unknown adapters: {}'.format(ampl))
 
 def get_trimmed_reads(wildcards):
     """Get trimmed reads of given sample-unit."""
