@@ -125,4 +125,7 @@ def get_position_beds(wildcards):
     return expand("results/7_positions/{sample}.bed",
                  sample=units["sample"].unique())
 
+def get_chrom_list(wildcards):
+    """Get chromosome list for which segmentation will be run"""
+    return units.loc[wildcards.sample, "chrom_list"].iloc[0]
 

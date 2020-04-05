@@ -52,7 +52,7 @@ def bam_to_pos_and_dist(in_bam, out_pos, chrom_lens):
 
         return (None, None)
 
-def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2):
+def segment_genome(dist, sample, do_plot_reg, out_plot, chrom_list, ncols=8, hipc=2, wipc=2):
     """
     Segmentation of genome based on logscale distances between read positions
     with DNAcopy circular binary segmentation algorithm.
@@ -73,28 +73,33 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2)
 
     # plotting
     if do_plot_reg:
-        print('- plotting')
-        nchrom = dist['chrom'].nunique()
+        print('- re-segmenting for plotting')
+        # get chromosome list for plotting
+        if len(chrom_list) == 0:
+            plot_chrom = dist['chrom'].drop_duplicates().tolist()
+        else:
+            plot_chrom = chrom_list
+        nchrom = len(plot_chrom)
         # set up figure dimensions
         ncols = ncols
         nrows = int(nchrom / ncols) + (nchrom % ncols > 0)
-        # need to limit nrows in plot, limiting number of plotted seqids
+        # need to limit nrows in plot
         if nrows > 200:
             nrows = 200
             plot_nchrom = ncols * nrows
             print('WARNING: too many sequences in reference, '
-                  're-segmenting and plotting first {}'.format(plot_nchrom))
-            plot_chrom = dist['chrom'].drop_duplicates().iloc[:plot_nchrom]
-            plot_dist = dist[dist['chrom'].isin(plot_chrom)]
-            plot_cna = dnacopy.CNA(robjects.FloatVector(plot_dist['log.dist']),
-                            robjects.StrVector(plot_dist['chrom']), 
-                            robjects.IntVector(plot_dist['end']), # end of dist = start of pos
-                            data_type="logratio", sample=sample)
-            plot_cna = dnacopy.smooth_CNA(plot_cna)
-            plot_segm = dnacopy.segment(plot_cna, verbose=0)
-        # no limit
-        else:
-            plot_segm = segm
+                  ' only first {} will be displayed on plot'.format(plot_nchrom))
+            plot_chrom = plot_chrom[:plot_nchrom]
+        # re-segmenting
+        # TODO check chromosome set consistency
+        plot_dist = dist[dist['chrom'].isin(plot_chrom)]
+        plot_cna = dnacopy.CNA(robjects.FloatVector(plot_dist['log.dist']),
+                        robjects.StrVector(plot_dist['chrom']), 
+                        robjects.IntVector(plot_dist['end']), # end of dist = start of pos
+                        data_type="logratio", sample=sample)
+        plot_cna = dnacopy.smooth_CNA(plot_cna)
+        plot_segm = dnacopy.segment(plot_cna, verbose=0)
+        print('- plotting')
         dims = robjects.IntVector([nrows, ncols])
         height = nrows * hipc
         width = ncols * wipc
@@ -103,7 +108,6 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2)
         ylim = robjects.FloatVector([0, ymax])
         grdevices = importr('grDevices')
         grdevices.pdf(file=out_plot, width=width, height=height)
-        # S3 object - determined by first argument
         dnacopy.plot_DNAcopy(plot_segm, 
                             plot_type='s',
                             ylim=ylim,
@@ -112,7 +116,7 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, ncols=8, hipc=2, wipc=2)
         grdevices.dev_off()
 
     # convert to pandas dataframe
-    print('- converting results to pandas df')
+    print('- converting results to pandas dataframe')
     pandas2ri.activate()
     regions = robjects.pandas2ri.ri2py(segm[1])
     
@@ -279,10 +283,20 @@ if __name__ == "__main__":
         if do_plot_reg:
             open(out_plot, 'w').close()
     else:
+        print('Reading chromosome list')
+        chrom_list_file = str(snakemake.params.chrom_list)
+        print('{}'.format(chrom_list_file))
+        chrom_list = []
+        # TODO better type casting
+        if (chrom_list_file != 'nan') and (len(chrom_list_file) > 0):
+            with open(chrom_list_file) as f:
+                for l in f:
+                    chrom_list.append(l.strip().split()[0])
         print('Segmenting the genome with DNAcopy')
         regions = segment_genome(dist, sample,
                                  do_plot_reg,
                                  out_plot,
+                                 chrom_list,
                                  snakemake.params.plot_ncols,
                                  snakemake.params.plot_chrom_height,
                                  snakemake.params.plot_chrom_width)

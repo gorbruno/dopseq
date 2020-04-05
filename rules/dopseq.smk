@@ -178,7 +178,7 @@ rule samtools_merge:
 rule regions:
     input:
         "results/6_merged/{sample}.bam",
-        genome_fai=get_ref_fai
+        genome_fai=get_ref_fai,
     output:
         pos="results/7_positions/{sample}.bed",
         reg="results/8_regions/{sample}.reg.tsv"
@@ -188,7 +188,8 @@ rule regions:
         plot="results/8_regions/{sample}.reg.pdf",
         plot_ncols=config["params"]["region"]["plot_ncols"],
         plot_chrom_height=config["params"]["region"]["plot_chrom_height"],
-        plot_chrom_width=config["params"]["region"]["plot_chrom_width"]
+        plot_chrom_width=config["params"]["region"]["plot_chrom_width"],
+        chrom_list=get_chrom_list
     conda:
         "../env.yaml"
     script:
