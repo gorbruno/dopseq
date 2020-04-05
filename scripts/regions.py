@@ -10,6 +10,7 @@ import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 from scipy.stats import binom_test
+from collections import OrderedDict
 
 
 def read_fai(genome_fai): 
@@ -17,7 +18,7 @@ def read_fai(genome_fai):
     chromosome sizes from fasta index
     chromosome : (0, chromosome_length)
     """
-    chrom_lens = dict()
+    chrom_lens = OrderedDict()
     with open(genome_fai) as f:
         for l in f:
             ll = l.split('\t')
@@ -27,7 +28,7 @@ def read_fai(genome_fai):
                 pass
     return chrom_lens
 
-def bam_to_pos_and_dist(in_bam, out_pos, chrom_lens):
+def bam_to_pos_and_dist(in_bam, out_pos, genome_fai):
     """Convert BAM into positions and 
        distances between positions"""
 
@@ -35,11 +36,11 @@ def bam_to_pos_and_dist(in_bam, out_pos, chrom_lens):
     # non-empty BAM
     if in_bam.count() > 0:
         # positions - merged overlapping reads
-        pos_bed = in_bam.bam_to_bed().sort().merge(c=1, o='count').saveas(out_pos)
+        pos_bed = in_bam.bam_to_bed().sort(faidx=genome_fai).merge(c=1, o='count').saveas(out_pos)
         pos = pos_bed.to_dataframe()
         pos['chrom'] = pos['chrom'].astype(str)
         # distance - complement of positions, i.e. end-to-start distances between positions
-        dist = pos_bed.complement(g=chrom_lens).to_dataframe()
+        dist = pos_bed.complement(g=genome_fai).to_dataframe()
         dist['chrom'] = dist['chrom'].astype(str)
         # logscale end-to-start distances
         dist['log.dist'] = np.log10(dist['end'] - dist['start'])
@@ -52,7 +53,7 @@ def bam_to_pos_and_dist(in_bam, out_pos, chrom_lens):
 
         return (None, None)
 
-def segment_genome(dist, sample, do_plot_reg, out_plot, chrom_list, ncols=8, hipc=2, wipc=2):
+def segment_genome(dist, sample, do_plot_reg, out_plot, chrom_list, chrom_lens, ncols=8, hipc=2, wipc=2):
     """
     Segmentation of genome based on logscale distances between read positions
     with DNAcopy circular binary segmentation algorithm.
@@ -76,7 +77,9 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, chrom_list, ncols=8, hip
         print('- re-segmenting for plotting')
         # get chromosome list for plotting
         if len(chrom_list) == 0:
-            plot_chrom = dist['chrom'].drop_duplicates().tolist()
+            # use faidx order for all chromosomes 
+            # helps if nrows limit reached
+            plot_chrom = list(chrom_lens.keys())
         else:
             plot_chrom = chrom_list
         nchrom = len(plot_chrom)
@@ -267,15 +270,14 @@ def regions_stats(regions, chrom_lens):
 if __name__ == "__main__":
     in_bam = snakemake.input[0]
     genome_fai = str(snakemake.input.genome_fai) # for some reason read as snakemake.io.Namedlist
+    chrom_lens = read_fai(genome_fai)
     out_pos = snakemake.output.pos
     out_reg = snakemake.output.reg
     do_plot_reg = snakemake.params.do_plot_reg
     out_plot = snakemake.params.plot
     sample = snakemake.params.sample
-    print('Reading chromosome lengths from fai')
-    chrom_lens = read_fai(genome_fai)
     print('Converting BAM to positions and distances between positions')
-    (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos, chrom_lens)
+    (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos, genome_fai)
     # empty BAM - touch remaining outputs
     if pos is None:
         print('No reads - creating empty output files')
@@ -297,6 +299,7 @@ if __name__ == "__main__":
                                  do_plot_reg,
                                  out_plot,
                                  chrom_list,
+                                 chrom_lens,
                                  snakemake.params.plot_ncols,
                                  snakemake.params.plot_chrom_height,
                                  snakemake.params.plot_chrom_width)
