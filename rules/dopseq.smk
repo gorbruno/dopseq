@@ -23,11 +23,14 @@ rule trim_reads_se:
         ampl_to_cutadapt_se, config["params"]["cutadapt"]["se"]
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
+    threads: 
+        config["params"]["threads"]
     conda:
         "../env.yaml"
     shell:
         "cutadapt"
         " {params}"
+        " -j {threads}"
         " -o {output.fastq}"
         " {input}"
         " > {output.qc} 2> {log}"
@@ -43,11 +46,14 @@ rule trim_reads_pe:
         ampl_to_cutadapt_pe, config["params"]["cutadapt"]["pe"]
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
+    threads: 
+        config["params"]["threads"]
     conda:
         "../env.yaml"
     shell:
         "cutadapt"
         " {params}"
+        " -j {threads}"
         " -o {output.fastq1}"
         " -p {output.fastq2}"
         " {input}"
