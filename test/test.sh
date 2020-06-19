@@ -36,6 +36,8 @@ else
 	echo 'Skipping test environment intallation'
 fi
 
+# activate wrapper env
+# this will work only if conda bin dir is in $PATH
 source activate $CONDANAME
 
 # download example reads

@@ -7,8 +7,8 @@ workflow:
 
 params:
   # maximum threads par task.
-  # Applicable to bwa mem, samtools merge
-  threads: 1
+  # Applicable to cutadapt, bwa mem, samtools merge
+  threads: 2
   # additional parameters to cutadapt
   cutadapt:
     # common cutadapt parameters, 

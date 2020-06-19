@@ -52,7 +52,10 @@ def ampl_to_cutadapt_pe(wildcards):
         return '-a TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -A TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -e 0.2'
     elif ampl == 'illumina':
         return ' -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT'
-    return ''
+    elif ampl == 'none':
+        return ''
+    else:
+        raise ValueError('Unknown adapters: {}'.format(ampl))
 
 def ampl_to_cutadapt_se(wildcards):
 
@@ -70,7 +73,10 @@ def ampl_to_cutadapt_se(wildcards):
     #     return '-g TTGTGTTGGGTGTGTTTGG...CCAAACACACCCAACACAA -e 0.2'
     elif ampl == 'illumina':
         return ' -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
-    return ''
+    elif ampl == 'none':
+        return ''
+    else:
+        raise ValueError('Unknown adapters: {}'.format(ampl))
 
 def get_trimmed_reads(wildcards):
     """Get trimmed reads of given sample-unit."""
@@ -119,4 +125,7 @@ def get_position_beds(wildcards):
     return expand("results/7_positions/{sample}.bed",
                  sample=units["sample"].unique())
 
+def get_chrom_list(wildcards):
+    """Get chromosome list for which segmentation will be run"""
+    return units.loc[wildcards.sample, "chrom_list"].iloc[0]
 

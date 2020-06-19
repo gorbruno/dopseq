@@ -23,11 +23,14 @@ rule trim_reads_se:
         ampl_to_cutadapt_se, config["params"]["cutadapt"]["se"]
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
+    threads: 
+        config["params"]["threads"]
     conda:
         "../env.yaml"
     shell:
         "cutadapt"
         " {params}"
+        " -j {threads}"
         " -o {output.fastq}"
         " {input}"
         " > {output.qc} 2> {log}"
@@ -43,11 +46,14 @@ rule trim_reads_pe:
         ampl_to_cutadapt_pe, config["params"]["cutadapt"]["pe"]
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
+    threads: 
+        config["params"]["threads"]
     conda:
         "../env.yaml"
     shell:
         "cutadapt"
         " {params}"
+        " -j {threads}"
         " -o {output.fastq1}"
         " -p {output.fastq2}"
         " {input}"
@@ -178,7 +184,7 @@ rule samtools_merge:
 rule regions:
     input:
         "results/6_merged/{sample}.bam",
-        genome_fai=get_ref_fai
+        genome_fai=get_ref_fai,
     output:
         pos="results/7_positions/{sample}.bed",
         reg="results/8_regions/{sample}.reg.tsv"
@@ -188,7 +194,8 @@ rule regions:
         plot="results/8_regions/{sample}.reg.pdf",
         plot_ncols=config["params"]["region"]["plot_ncols"],
         plot_chrom_height=config["params"]["region"]["plot_chrom_height"],
-        plot_chrom_width=config["params"]["region"]["plot_chrom_width"]
+        plot_chrom_width=config["params"]["region"]["plot_chrom_width"],
+        chrom_list=get_chrom_list
     conda:
         "../env.yaml"
     script:
