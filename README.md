@@ -166,3 +166,7 @@ A single environment is generated for all tasks except fastqc
 
 `test` directory contains tests of dopseq functionality, including whole pipeline run on fox B chromosome data and sanity checks of the output files. Test can be run from the dopseq directory with 
 `bash test/test.sh`.  
+
+## Citation
+
+- Makunin AI, Kichigin IG, Larkin DM, O’Brien PCM, Ferguson-Smith MA, Yang F, et al. Contrasting origin of B chromosomes in two cervids (Siberian roe deer and grey brocket deer) unravelled by chromosome-specific DNA sequencing. BMC Genomics. 2016;17: 618. doi:10.1186/s12864-016-2933-6
