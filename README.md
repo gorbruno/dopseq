@@ -15,10 +15,11 @@ This software relies on [Snakemake](https://snakemake.readthedocs.io/en/stable/)
 
 ## Quick start
 
-First, install snakemake using [conda](https://conda.io/docs/user-guide/install/index.html)
+First, create environment for snakemake using [conda](https://conda.io/docs/user-guide/install/index.html). Note that snakemake currently recommends using an alternative resolver [mamba](https://github.com/mamba-org/mamba).
 
 ```
-conda install -c bioconda -c conda-forge snakemake\>=5.2.0
+mamba create -n dopseq -c conda-forge -c bioconda -c defaults snakemake=5.2.0 python=3.6 pandas=0.23
+conda activate dopseq
 ```
 
 Clone dopseq and go to its directory
@@ -31,7 +32,7 @@ cd dopseq
 Set up your analysis by editing the following files:
 
 - `samples.tsv` for per-sample data, 
-- `config.yaml` for common analysis parameters. 
+- `config.yaml` for shared analysis parameters. 
 
 See ['Parameter setting'](#parameter-setting) section for details.
 
