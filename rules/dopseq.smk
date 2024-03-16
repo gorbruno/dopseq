@@ -6,12 +6,25 @@ rule fastqc_init:
         html="results/0_fastqc_init/{sample}-{unit}.qc_init.html",
         zip="results/0_fastqc_init/{sample}-{unit}.qc_init.zip"
     # usable with custom shell
-    # params:
-    #     dir="results/0_fastqc_init/"
-    # conda:
-    #     "../env.yaml"
-    wrapper:
-        "0.27.1/bio/fastqc"
+    params:
+        tempdir="work/fastqc_init_{sample}_{unit}",
+        outdir="results/0_fastqc_init/"
+    conda:
+        "../env.yaml"
+    log:
+        "results/logs/fastqc/{sample}-{unit}_init.log"
+    threads: 1
+    shell:
+        "rm -rf {params.tempdir} && "
+        "mkdir -p {params.tempdir} && "
+        "fastqc"
+        " --threads {threads}"
+        " --outdir {params.tempdir}"
+        " {input}"
+        " &> {log} && "
+        "mkdir {params.outdir} && "
+        "mv {params.tempdir}/*html {output.html} && "
+        "mv {params.tempdir}/*zip {output.zip}"
 
 rule trim_reads_se:
     input:
@@ -66,13 +79,25 @@ rule fastqc_trimmed:
         html="results/2_fastqc_trim/{sample}-{unit}.qc_trim.html",
         zip="results/2_fastqc_trim/{sample}-{unit}.qc_trim.zip"
     # usable with custom shell
-    # params:
-    #     dir="results/2_fastqc_trim/"
-    # conda:
-    #     "../env.yaml"
-    wrapper:
-        "0.27.1/bio/fastqc"
-
+    params:
+        tempdir="work/fastqc_trim_{sample}_{unit}",
+        outdir="results/2_fastqc_trim/"
+    conda:
+        "../env.yaml"
+    log:
+        "results/logs/fastqc/{sample}-{unit}_trim.log"
+    threads: 1
+    shell:
+        "rm -rf {params.tempdir} && "
+        "mkdir -p {params.tempdir} && "
+        "fastqc"
+        " --threads {threads}"
+        " --outdir {params.tempdir}"
+        " {input}"
+        " &> {log} && "
+        "mkdir {params.outdir} && "
+        "mv {params.tempdir}/*html {output.html} && "
+        "mv {params.tempdir}/*zip {output.zip}"
 # genome preparation done in the input dir
 rule bwa_index:
     input:
