@@ -293,7 +293,9 @@ if __name__ == "__main__":
         if (chrom_list_file != 'nan') and (len(chrom_list_file) > 0):
             with open(chrom_list_file) as f:
                 for l in f:
-                    chrom_list.append(l.strip().split()[0])
+                    l = l.strip()
+                    if len(l) > 0:
+                        chrom_list.append( l.split()[0])
         print('Segmenting the genome with DNAcopy')
         regions = segment_genome(dist, sample,
                                  do_plot_reg,

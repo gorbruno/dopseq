@@ -3,9 +3,7 @@ rule fastqc_init:
     input:
         get_fastq
     output:
-        html="results/0_fastqc_init/{sample}-{unit}.qc_init.html",
-        zip="results/0_fastqc_init/{sample}-{unit}.qc_init.zip"
-    # usable with custom shell
+        flag="results/0_fastqc_init/{sample}-{unit}.done"
     params:
         tempdir="work/fastqc_init_{sample}_{unit}",
         outdir="results/0_fastqc_init/"
@@ -13,7 +11,8 @@ rule fastqc_init:
         "../env.yaml"
     log:
         "results/logs/fastqc/{sample}-{unit}_init.log"
-    threads: 1
+    threads:
+        config["params"]["threads"]
     shell:
         "rm -rf {params.tempdir} && "
         "mkdir -p {params.tempdir} && "
@@ -22,9 +21,9 @@ rule fastqc_init:
         " --outdir {params.tempdir}"
         " {input}"
         " &> {log} && "
-        "mkdir {params.outdir} && "
-        "mv {params.tempdir}/*html {output.html} && "
-        "mv {params.tempdir}/*zip {output.zip}"
+        "mv {params.tempdir}/*html {params.outdir} && "
+        "mv {params.tempdir}/*zip {params.outdir} && "
+        "touch {output.flag} && rm -r {params.tempdir}"
 
 rule trim_reads_se:
     input:
@@ -76,9 +75,7 @@ rule fastqc_trimmed:
     input:
         get_trimmed_reads
     output:
-        html="results/2_fastqc_trim/{sample}-{unit}.qc_trim.html",
-        zip="results/2_fastqc_trim/{sample}-{unit}.qc_trim.zip"
-    # usable with custom shell
+        flag="results/2_fastqc_trim/{sample}-{unit}.done"
     params:
         tempdir="work/fastqc_trim_{sample}_{unit}",
         outdir="results/2_fastqc_trim/"
@@ -86,7 +83,8 @@ rule fastqc_trimmed:
         "../env.yaml"
     log:
         "results/logs/fastqc/{sample}-{unit}_trim.log"
-    threads: 1
+    threads: 
+        config["params"]["threads"]
     shell:
         "rm -rf {params.tempdir} && "
         "mkdir -p {params.tempdir} && "
@@ -95,9 +93,10 @@ rule fastqc_trimmed:
         " --outdir {params.tempdir}"
         " {input}"
         " &> {log} && "
-        "mkdir {params.outdir} && "
-        "mv {params.tempdir}/*html {output.html} && "
-        "mv {params.tempdir}/*zip {output.zip}"
+        "mv {params.tempdir}/*html {params.outdir} && "
+        "mv {params.tempdir}/*zip {params.outdir} && "
+        "touch {output.flag} && rm -r {params.tempdir}"
+
 # genome preparation done in the input dir
 rule bwa_index:
     input:
