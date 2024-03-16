@@ -1,4 +1,4 @@
-samples: samples.tsv
+samples: test/test_samples.tsv
 
 workflow:
   # whether to plot regions:

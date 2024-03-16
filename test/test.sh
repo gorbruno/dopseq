@@ -90,18 +90,18 @@ else
 fi
 
 # copy test files
-echo 'Setting up dopseq'
-cp -v test/test_samples.tsv samples.tsv
-cp -v test/test_config.yaml config.yaml
-echo 'Setting up dopseq done'
+# echo 'Setting up dopseq'
+# cp -v test/test_samples.tsv samples.tsv
+# cp -v test/test_config.yaml config.yaml
+# echo 'Setting up dopseq done'
 
-# activate wrapper env
+echo 'Activating dopseq env'
 # this will work only if conda bin dir is in $PATH
 conda activate dopseq
 
 # run pipeline
 echo 'Running dopseq'
-snakemake -j 2
+snakemake -j 2 --configfile test/test_config.yaml
 echo 'Running dopseq complete'
 
 # validate results
