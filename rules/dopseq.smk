@@ -1,4 +1,3 @@
-# we use smk wrapper for fastqc to avoid duplication of lengthy rules
 rule fastqc_init:
     input:
         get_fastq
@@ -102,11 +101,11 @@ rule bwa_index:
     input:
         "{genome}"
     output:
-        "{genome}.amb",
-        "{genome}.ann",
-        "{genome}.bwt",
-        "{genome}.pac",
-        "{genome}.sa"
+        # "{genome}.amb",
+        # "{genome}.ann",
+        "{genome}.bwt"
+        # "{genome}.pac",
+        # "{genome}.sa"
     conda:
         "../env.yaml"
     log:
@@ -129,7 +128,7 @@ rule samtools_faidx:
 rule map_reads_bwa_mem:
     input:
         reads=get_trimmed_reads,
-        index=get_ref_bwt
+        index=ancient(get_ref_bwt)
     output:
         bam="results/3_mapped/{sample}-{unit}.sorted.bam"
     log:
@@ -143,13 +142,13 @@ rule map_reads_bwa_mem:
         "../env.yaml"
     shell:
         "bwa mem"
-        " -t {threads} "
-        "{params.extra} "
-        "{params.index} "
-        "{input.reads} "
-        "2> {log.mem} | "
+        " -t {threads}"
+        " {params.extra}"
+        " {params.index}"
+        " {input.reads}"
+        " 2> {log.mem} | "
         "samtools sort - "
-        "-o {output} &> {log.sort} "
+        " -o {output} &> {log.sort}"
 
 # alignment filtering and merging
 rule mark_duplicates:
@@ -204,7 +203,6 @@ rule samtools_merge:
         "samtools merge --threads {threads} {params} "
         " {output} {input}"
 
-# regions
 rule regions:
     input:
         "results/6_merged/{sample}.bam",
@@ -225,7 +223,6 @@ rule regions:
     script:
         "../scripts/regions.py"
 
-# statistics
 rule stats: 
     input:
         get_position_beds

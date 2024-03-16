@@ -3,7 +3,7 @@ Isolated chromosome sequencing analysis
 
 ## Introduction
 
-dopseq is a set of tools for reference-based prediction of regions present on chromosomes based on   high-throughput sequencing data generated from isolated (flow sorted or microdissected) chromosomes. This project is a reimplementation of https://github.com/ilyakichigin/DOPseq_analyzer.  
+dopseq is a pipeline for reference-based prediction of regions present on chromosomes based on high-throughput sequencing data generated from isolated (flow sorted or microdissected) chromosomes. This project is a reimplementation of https://github.com/ilyakichigin/DOPseq_analyzer.  
 
 Current version includes chromosomal region prediction pipeline: 
 - read trimming and qc with cutadapt and fastqc,
@@ -11,7 +11,7 @@ Current version includes chromosomal region prediction pipeline:
 - PCR duplicate and quality filtering with picard and samtools,
 - genome segmentation with DNAcopy R package, plotting and statistics accumulation.
 
-This software relies on [Snakemake](https://snakemake.readthedocs.io/en/stable/) for workflow and on [conda](https://conda.io/docs/) for dependencies management. The pipeline implementation is based on [Snakemake workflow for dna-seq](https://github.com/snakemake-workflows/dna-seq-gatk-variant-calling).
+This software relies on [Snakemake](https://snakemake.readthedocs.io/en/v5.2.0/) for workflow and on [conda](https://conda.io/docs/) for dependencies management. The pipeline implementation is based on [Snakemake workflow for dna-seq](https://github.com/snakemake-workflows/dna-seq-gatk-variant-calling).
 
 ## Quick start
 
@@ -22,7 +22,7 @@ git clone https://github.com/lca-imcb/dopseq.git
 cd dopseq
 ```
 
-Create environment for the pipeline - we suggest using mamba instead of default conda to speed up dependencies resolution
+Create environment for the pipeline - we suggest using mamba instead of conda to speed up dependencies resolution
 ```
 mamba env create -f env.yaml
 ```
@@ -159,7 +159,7 @@ This section can be useful if you want to change parameters not listed above, as
 `Snakemake` file sets the desired output files and links to the other smk files: 
 - `rules/dopseq.smk` includes rules for the pipeline itself;
 - `rules/common.smk` includes functions for filename and parameter setting based on sample data, which is located in `samples.tsv`;
-For further reading, please refer to [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/).
+For further reading, please refer to [Snakemake documentation](https://snakemake.readthedocs.io/en/v5.2.0/).
 
 `script` directory: 
 - `script/regions.py` converts filtered BAM to BED with overlapping reads merged into positions (`results/7_positions`) and performs genome segmentation (`results/8_regions`).
@@ -172,7 +172,7 @@ A single environment is generated for all tasks except fastqc
 `schemas` directory includes files for testing `config.yaml` and `samples.tsv` format.
 
 `test` directory contains tests of dopseq functionality, including whole pipeline run on fox B chromosome data and sanity checks of the output files. Test can be run with 
-`cd dopseq && bash test/test.sh`.  
+`cd dopseq && bash test/test.sh` - if you already created the `dopseq` environment, do `touch test/env.installed` first.
 
 ## Citation
 
