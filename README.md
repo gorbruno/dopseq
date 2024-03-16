@@ -15,13 +15,6 @@ This software relies on [Snakemake](https://snakemake.readthedocs.io/en/stable/)
 
 ## Quick start
 
-First, create environment for snakemake using [conda](https://conda.io/docs/user-guide/install/index.html). Note that snakemake currently recommends using an alternative resolver [mamba](https://github.com/mamba-org/mamba).
-
-```
-mamba create -n dopseq -c conda-forge -c bioconda -c defaults snakemake=5.2.0 python=3.6 pandas=0.23
-conda activate dopseq
-```
-
 Clone dopseq and go to its directory
 
 ```
@@ -29,37 +22,100 @@ git clone https://github.com/lca-imcb/dopseq.git
 cd dopseq
 ```
 
+Create environment for the pipeline - we suggest using mamba instead of default conda to speed up dependencies resolution
+```
+mamba env create -f env.yaml
+```
+
+Activate the environment
+```
+conda activate dopseq
+```
+
 Set up your analysis by editing the following files:
 
 - `samples.tsv` for per-sample data, 
 - `config.yaml` for shared analysis parameters. 
 
-See ['Parameter setting'](#parameter-setting) section for details.
-
-After that, you can test the pipeline with a dry run:
+After that, you can test the pipeline with a dry run
 
 ```
-snakemake --use-conda -n
+snakemake -n
 ```
 
-And then run the analysis:
+And then run the analysis 
 
 ```
-snakemake --use-conda
+snakemake -j 4
 ```
 
-## Steps and outputs description
+## Parameter setting
+
+### config.yaml
+
+Configuration applied to the entire analysis in YAML format. Sections:
+
+- `samples` - path to tab-separated file with sample data.
+
+- `workflow` - amend workflow logic:
+  - `do_plot_reg` - produce ditance-region plots for seqids specified in `chrom_list` column of samples tsv. 
+
+- `params` section provides software-related parameters:
+  - `threads` - number of threads for each of `cutadapt`, `bwa mem` and `samtools` processes. 
+  You should specify number of cores used by the pipeline with snakemake `-j` parameter.
+  - `cutadapt` - cutadapt general filtering options for paired-end (PE) and single-end (SE) reads. Default - trim terminal Ns and remove reads shorter than 20 bp.
+  - `picard_MarkDuplicates` - by default set to remove duplicates instead of marking them.
+  - `region` - ditance-region plots size parameters
+
+### samples.tsv
+
+Tab-separated file with sample data. Columns:
+
+- `sample` - sample name used as prefix for the output files.
+
+- `unit` - multiple input units (lanes, libraries, biological replicates etc) can be specified for each sample. 
+Each unit is trimmed, aligned and filtered separately, so file prefixes are `{sample}-{unit}` for steps prior to bam merging.
+After bam merging, file prefixes only include `{sample}`.
+
+- `platform` - sequencing platform, most likely `ILLUMINA`. used to set `@RG PL` field of the per-unit BAMs, merged BAM contains all `@RG` lines. 
+
+- `adapters` - sequencing or library adapters to be removed from reads:
+  - `dop` - DOP-PCR MW6 primer (Telenius et al., 1992), reads without primer match at 5\` end are discarded;
+  - `dop_relaxed` - same as `dop`, but reads without primers are not discarded;
+  - `wga` - WGA1 GP primer, reads without primer match at 5\` end are discarded;
+  - `wga_relaxed` - same as `wga`, but reads without primers are not discarded;
+  - `illumina` - only remove Illumina standard adapter from 3\` end (readthrough);
+  - `none` - do not trim adapters, just filter reads using parameters from the configuration file
+
+For paired-end reads trimming with `dop` and `wga`, only pairs with primer matches in both reads are retained. 
+To increase the amount of retained reads, you can specify forward and reverse reads as separate units of one sample.
+
+- `reference` - path to unpacked reference genome in fasta format.  
+Note that index files will be saved in the same directory as the reference itself.
+For non-model species, selection of the reference balances between evolutionary proximity to the sample species and assembly quality. 
+
+- `min_len` - minimum alignment length to be retained for region inference. 
+
+- `min_q` - minimum mapping quality of the alignment to be retained for region inference.
+
+- `chrom_list` - list of sequids and their lengths to be visualised in ditance-region plots - fai files are accepted
+
+- `fq1` - forward or single-end reads fastq file (can be plain or gzipped).
+
+- `fq2` - reverse reads fastq file. Keep blank for single-end reads.
+
+
+## Pipeline steps
 
 Output files are stored in the `dopseq/results` directory, 
 with subdirectories numbered according to the analysis order and named by the output type. 
-Within each directory, file names have prefixes corresponding to sample and unit IDs. 
 
-- `0_fastqc_init` - FastQC of the input reads;
-- `1_trimmed` - read trimming and filtering with cutadapt;
-- `2_fastqc_trim` - FastQC of the trimmed reads, helps to identify the remaining problems with reads;
-- `3_mapped` - read mapping to reference genome with bwa mem;
-- `4_dedup` - removal of PCR duplicates with Picard MarkDuplicates;
-- `5_filtered` - alignment filtering for mapping quality and aligned fragment length using samtools and awk;
+- `0_fastqc_init` - FastQC assessment of the input reads;
+- `1_trimmed` - reads trimmed and filtered with cutadapt;
+- `2_fastqc_trim` - FastQC assessment of the trimmed reads, helps to identify the remaining problems with reads;
+- `3_mapped` - reads mapped to reference genome with bwa mem;
+- `4_dedup` - deduplicated read alignments with Picard MarkDuplicates;
+- `5_filtered` - alignments filtered for mapping quality and aligned fragment length using samtools and awk;
 - `6_merged` - merging all unit BAMs per sample with samtools;
 - `7_positions` - merging overlapping reads into read positions with pybedtools;
 - `8_regions` - genome segmentation based on distances between read positions with DNAcopy;
@@ -96,63 +152,13 @@ then first non-target regions has 20 kbp `pd_mean`,
 then values increase gradually). 
 For manual correction of region margins, visualization of BAMs (step 6) and BEDs (step 7) in genome browser can be useful. 
 
-## Parameter setting
-
-### samples.tsv
-
-Tab-separated file with sample data. Columns:
-
-- `sample` - sample name used as prefix for the output files.
-
-- `unit` - multiple input units (lanes, libraries, biological replicates etc) can be specified for each sample. 
-Units are trimmed, aligned and filtered separately, so file prefixes are `{sample}-{unit}` for steps prior to bam merging.
-After bam merging, file prefixes are just `{sample}`.
-
-- `platform` - used to set `@RG PL` field of the per-unit BAMs, merged BAM contains all `@RG` lines. 
-
-- `adapters` - sequencing or library adapters to be removed from reads:
-  - `dop` - DOP-PCR MW6 primer, reads without primer match at 5\` end are discarded;
-  - `dop_relaxed` - same as `dop`, but reads without primers are not discarded;
-  - `wga` - WGA1 GP primer, reads without primer match at 5\` end are discarded;
-  - `wga_relaxed` - same as `wga`, but reads without primers are not discarded;
-  - `illumina` - only remove Illumina standard adapter from 3\` end;
-  - `none` - do not trim adapters, just filter reads using parameters from the configuration file
-
-For paired-end reads trimming with `dop` and `wga`, only pairs with primer matches in both reads are retained. 
-To increase the amount of retained reads, you can specify forward and reverse reads as separate units of one sample.
-
-- `reference` - path to unpacked reference genome in fasta format. 
-For non-model species, selection of the reference balances between evolutionary proximity to the sample species and assembly quality. 
-Sometimes you may want to experiment with various references in order to obtain better results.
-
-- `fq1` - forward or single-end reads fastq file (can be plain or gzipped).
-
-- `fq2` - reverse reads fastq file. Keep blank for single-end reads.
-
-### config.yaml
-
-Configuration applied to the entire analysis in YAML format. Sections:
-
-- `samples` - path to tab-separated file with sample data.
-
-- `rmdup` - whether to perform PCR duplicate removal, boolean. 
-
-- `params` section provides software-related parameters:
-  - `threads` - number of parallel threads for each of `bwa mem` and `samtools merge` processes. 
-  You should specify number of cores used by the pipeline with snakemake `-j` parameter.
-  - `cutadapt` - cutadapt general filtering options for paired-end (PE) and single-end (SE) reads. Default - trim terminal Ns and remove reads shorter than 20 bp.
-  - `picard` - by default set to remove duplicates instead of marking them.
-  - `filter` - alignment filtering:
-    - `min_mapq` - minimum mapping quality (use higher value for more stringent removal of repetitive mappings),
-    - `min_len` - minimum mapping length (higher value help to avoid mapping errors at longer evolutionary distances).
-
-### Other files
+## Notes
 
 This section can be useful if you want to change parameters not listed above, as well as to add or remove steps.
 
 `Snakemake` file sets the desired output files and links to the other smk files: 
-- `rules/dopseq.smk` includes rules for generation of output files  all steps, parameters are automatically picked up from `config.yaml`.
-- `rules/common.smk` contains functions for filename and parameter setting based on sample data, which is located in `samples.tsv`.
+- `rules/dopseq.smk` includes rules for the pipeline itself;
+- `rules/common.smk` includes functions for filename and parameter setting based on sample data, which is located in `samples.tsv`;
 For further reading, please refer to [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/).
 
 `script` directory: 
@@ -163,10 +169,10 @@ For further reading, please refer to [Snakemake documentation](https://snakemake
 A single environment is generated for all tasks except fastqc 
 (which relies on smk wrapper).
 
-`schemas` directory includes files for testing `config.yaml` and `samples.tsv` integrity.
+`schemas` directory includes files for testing `config.yaml` and `samples.tsv` format.
 
-`test` directory contains tests of dopseq functionality, including whole pipeline run on fox B chromosome data and sanity checks of the output files. Test can be run from the dopseq directory with 
-`bash test/test.sh`.  
+`test` directory contains tests of dopseq functionality, including whole pipeline run on fox B chromosome data and sanity checks of the output files. Test can be run with 
+`cd dopseq && bash test/test.sh`.  
 
 ## Citation
 
