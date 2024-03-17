@@ -11,7 +11,7 @@ rule fastqc_init:
     log:
         "results/logs/fastqc/{sample}-{unit}_init.log"
     threads:
-        config["params"]["threads"]
+        1
     shell:
         "rm -rf {params.tempdir} && "
         "mkdir -p {params.tempdir} && "
@@ -35,7 +35,7 @@ rule trim_reads_se:
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
     threads: 
-        config["params"]["threads"]
+        1
     conda:
         "../env.yaml"
     shell:
@@ -58,7 +58,7 @@ rule trim_reads_pe:
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
     threads: 
-        config["params"]["threads"]
+        1
     conda:
         "../env.yaml"
     shell:
@@ -83,7 +83,7 @@ rule fastqc_trimmed:
     log:
         "results/logs/fastqc/{sample}-{unit}_trim.log"
     threads: 
-        config["params"]["threads"]
+        1
     shell:
         "rm -rf {params.tempdir} && "
         "mkdir -p {params.tempdir} && "
@@ -206,7 +206,7 @@ rule samtools_merge:
 rule regions:
     input:
         "results/6_merged/{sample}.bam",
-        genome_fai=get_ref_fai,
+        genome_fai=ancient(get_ref_fai),
     output:
         pos="results/7_positions/{sample}.bed",
         reg="results/8_regions/{sample}.reg.tsv"

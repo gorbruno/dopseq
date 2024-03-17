@@ -27,13 +27,13 @@ fi
 # check and install dopseq env
 if [[ ! -f test/env.installed ]]; then
 
-	echo 'Installing test environment'
-	mamba env create -f env.yaml --yes
-	echo 'Installing test environment complete'
+	echo 'Installing dopseq environment'
+	mamba env create -f env.yaml
+	echo 'Installing dopseq environment complete'
 	touch test/env.installed
 
 else
-	echo 'Skipping test environment intallation'
+	echo 'Skipping dopseq environment intallation'
 fi
 
 
@@ -43,9 +43,9 @@ if [[ ! -f test/reads.downloaded ]]; then
 	# TODO check and install test env
 	if [[ ! -f test/test_env.installed ]]; then
 
-		echo 'Installing test environment'
-		mamba env create -f test/test_env.yaml --yes
-		echo 'Installing test environment complete'
+		echo 'Installing dopseq_test environment'
+		mamba env create -f test/test_env.yaml
+		echo 'Installing dopseq_test environment complete'
 		touch test/test_env.installed
 
 	else

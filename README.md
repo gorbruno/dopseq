@@ -18,7 +18,7 @@ This software relies on [Snakemake](https://snakemake.readthedocs.io/en/v5.2.0/)
 Clone dopseq and go to its directory
 
 ```
-git clone https://github.com/lca-imcb/dopseq.git
+git clone git@github.com:lca-imcb/dopseq.git
 cd dopseq
 ```
 
