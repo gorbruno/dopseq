@@ -27,7 +27,21 @@ Create environment for the pipeline - we suggest using mamba instead of conda to
 mamba env create -f env.yaml
 ```
 
+If environment resolution fails or some dependencies don't work correctly, you can try using explicit specification files available for Linux and OS X 64-bit
+
+```
+conda create --name dopseq --file spec-linux-64.txt
+```
+
+or
+
+```
+conda create --name dopseq --file spec-osx-64.txt
+```
+
+
 Activate the environment
+
 ```
 conda activate dopseq
 ```
