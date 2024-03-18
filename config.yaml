@@ -1,26 +1,27 @@
 samples: samples.tsv
 
 workflow:
-  # whether to plot regions:
+  # whether to plot regions
   # not recommended for highly fragmented reference assemblies
+  # unless small number of seqids are specified in chrom_list
+  # of samples.tsv file
   do_plot_reg: true
 
 params:
-  # maximum threads par task.
-  # Applicable to fastqc, cutadapt, bwa mem, samtools merge
+  # maximum threads per bwa mem task
   threads: 2
-  # additional parameters to cutadapt
+  # additional parameters ffor cutadapt
   cutadapt:
     # common cutadapt parameters, 
     # per-library additional paramters are set by 
     # "amplification" parameter in samples.tsv
     pe: "--trim-n --minimum-length 20"
     se: "--trim-n --minimum-length 20"
-  # additional parameters to Picard
+  # additional parameters for Picard
   picard_MarkDuplicates: "-Xmx4G"
-  # additional parameters to plotting script
+  # additional parameters for plotting script
   region:
-    # plotting parameters, dims in inches
+    # plotting parameters, dimensions in inches
     plot_ncols: 8
     plot_chrom_height: 2
     plot_chrom_width: 3

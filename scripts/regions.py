@@ -295,7 +295,7 @@ if __name__ == "__main__":
                 for l in f:
                     l = l.strip()
                     if len(l) > 0:
-                        chrom_list.append( l.split()[0])
+                        chrom_list.append(l.split()[0])
         print('Segmenting the genome with DNAcopy')
         regions = segment_genome(dist, sample,
                                  do_plot_reg,

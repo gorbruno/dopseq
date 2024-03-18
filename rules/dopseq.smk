@@ -196,7 +196,7 @@ rule samtools_merge:
         "results/6_merged/{sample}.bam"
     params:
         "" 
-    threads: config["params"]["threads"]
+    threads: 1
     conda:
         "../env.yaml"
     shell:
