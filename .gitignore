@@ -1,8 +1,10 @@
-results/
+results*/
+work/
 .snakemake/
 dag.pdf
 .DS_Store
 # test related
+test/test_env.installed
 test/env.installed
 test/genome.downloaded
 test/reads.downloaded

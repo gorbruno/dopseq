@@ -4,44 +4,55 @@
 # fox B chromosomes aligned to dog genome. 
 
 # This test should be run from dopseq folder as
-# ./test/test.sh
+# bash test/test.sh
 
 # exit on first error
 set -e
 
-CONDANAME=dopseq_test
 READDIR=test_fastq
 GENOMEDIR=test_genome
 RUNDIR=$PWD
+
+# enable conda activate
+eval "$(conda shell.bash hook)"
 
 # check directory
 if [[ $RUNDIR == *dopseq ]]; then
 	echo "Test run from $RUNDIR. OK!"
 else
-	echo "Test should be run from dopseq dir"
+	echo "Test should be executed from dopseq dir"
 	exit 1
 fi
 
-# intall dependencies
+# check and install dopseq env
 if [[ ! -f test/env.installed ]]; then
 
-	echo 'Installing test environment'
-	conda create --yes --name $CONDANAME python=3.6
-	conda env update --name $CONDANAME --file test/test_env.yaml
-	conda clean --yes --all
-	echo 'Installing test environment complete'
+	echo 'Installing dopseq environment'
+	mamba env create -f env.yaml
+	echo 'Installing dopseq environment complete'
 	touch test/env.installed
 
 else
-	echo 'Skipping test environment intallation'
+	echo 'Skipping dopseq environment intallation'
 fi
 
-# activate wrapper env
-# this will work only if conda bin dir is in $PATH
-source activate $CONDANAME
 
 # download example reads
 if [[ ! -f test/reads.downloaded ]]; then
+
+	# TODO check and install test env
+	if [[ ! -f test/test_env.installed ]]; then
+
+		echo 'Installing dopseq_test environment'
+		mamba env create -f test/test_env.yaml
+		echo 'Installing dopseq_test environment complete'
+		touch test/test_env.installed
+
+	else
+		echo 'Skipping test environment intallation'
+	fi
+
+	conda activate dopseq_test
 
 	echo 'Downloading test reads'
 	rm -rf $READDIR
@@ -79,14 +90,18 @@ else
 fi
 
 # copy test files
-echo 'Setting up dopseq'
-cp -v test/test_samples.tsv samples.tsv
-cp -v test/test_config.yaml config.yaml
-echo 'Setting up dopseq done'
+# echo 'Setting up dopseq'
+# cp -v test/test_samples.tsv samples.tsv
+# cp -v test/test_config.yaml config.yaml
+# echo 'Setting up dopseq done'
+
+echo 'Activating dopseq env'
+# this will work only if conda bin dir is in $PATH
+conda activate dopseq
 
 # run pipeline
 echo 'Running dopseq'
-snakemake -j 2 --use-conda
+snakemake -j 2 --configfile test/test_config.yaml
 echo 'Running dopseq complete'
 
 # validate results

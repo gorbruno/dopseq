@@ -1,17 +1,28 @@
-# we use smk wrapper for fastqc to avoid duplication of lengthy rules
 rule fastqc_init:
     input:
         get_fastq
     output:
-        html="results/0_fastqc_init/{sample}-{unit}.qc_init.html",
-        zip="results/0_fastqc_init/{sample}-{unit}.qc_init.zip"
-    # usable with custom shell
-    # params:
-    #     dir="results/0_fastqc_init/"
-    # conda:
-    #     "../env.yaml"
-    wrapper:
-        "0.27.1/bio/fastqc"
+        flag="results/0_fastqc_init/{sample}-{unit}.done"
+    params:
+        tempdir="work/fastqc_init_{sample}_{unit}",
+        outdir="results/0_fastqc_init/"
+    conda:
+        "../env.yaml"
+    log:
+        "results/logs/fastqc/{sample}-{unit}_init.log"
+    threads:
+        1
+    shell:
+        "rm -rf {params.tempdir} && "
+        "mkdir -p {params.tempdir} && "
+        "fastqc"
+        " --threads {threads}"
+        " --outdir {params.tempdir}"
+        " {input}"
+        " &> {log} && "
+        "mv {params.tempdir}/*html {params.outdir} && "
+        "mv {params.tempdir}/*zip {params.outdir} && "
+        "touch {output.flag} && rm -r {params.tempdir}"
 
 rule trim_reads_se:
     input:
@@ -24,7 +35,7 @@ rule trim_reads_se:
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
     threads: 
-        config["params"]["threads"]
+        1
     conda:
         "../env.yaml"
     shell:
@@ -47,7 +58,7 @@ rule trim_reads_pe:
     log:
         "results/logs/cutadapt/{sample}-{unit}.log"
     threads: 
-        config["params"]["threads"]
+        1
     conda:
         "../env.yaml"
     shell:
@@ -63,26 +74,38 @@ rule fastqc_trimmed:
     input:
         get_trimmed_reads
     output:
-        html="results/2_fastqc_trim/{sample}-{unit}.qc_trim.html",
-        zip="results/2_fastqc_trim/{sample}-{unit}.qc_trim.zip"
-    # usable with custom shell
-    # params:
-    #     dir="results/2_fastqc_trim/"
-    # conda:
-    #     "../env.yaml"
-    wrapper:
-        "0.27.1/bio/fastqc"
+        flag="results/2_fastqc_trim/{sample}-{unit}.done"
+    params:
+        tempdir="work/fastqc_trim_{sample}_{unit}",
+        outdir="results/2_fastqc_trim/"
+    conda:
+        "../env.yaml"
+    log:
+        "results/logs/fastqc/{sample}-{unit}_trim.log"
+    threads: 
+        1
+    shell:
+        "rm -rf {params.tempdir} && "
+        "mkdir -p {params.tempdir} && "
+        "fastqc"
+        " --threads {threads}"
+        " --outdir {params.tempdir}"
+        " {input}"
+        " &> {log} && "
+        "mv {params.tempdir}/*html {params.outdir} && "
+        "mv {params.tempdir}/*zip {params.outdir} && "
+        "touch {output.flag} && rm -r {params.tempdir}"
 
 # genome preparation done in the input dir
 rule bwa_index:
     input:
         "{genome}"
     output:
-        "{genome}.amb",
-        "{genome}.ann",
-        "{genome}.bwt",
-        "{genome}.pac",
-        "{genome}.sa"
+        # "{genome}.amb",
+        # "{genome}.ann",
+        "{genome}.bwt"
+        # "{genome}.pac",
+        # "{genome}.sa"
     conda:
         "../env.yaml"
     log:
@@ -105,7 +128,7 @@ rule samtools_faidx:
 rule map_reads_bwa_mem:
     input:
         reads=get_trimmed_reads,
-        index=get_ref_bwt
+        index=ancient(get_ref_bwt)
     output:
         bam="results/3_mapped/{sample}-{unit}.sorted.bam"
     log:
@@ -119,13 +142,13 @@ rule map_reads_bwa_mem:
         "../env.yaml"
     shell:
         "bwa mem"
-        " -t {threads} "
-        "{params.extra} "
-        "{params.index} "
-        "{input.reads} "
-        "2> {log.mem} | "
+        " -t {threads}"
+        " {params.extra}"
+        " {params.index}"
+        " {input.reads}"
+        " 2> {log.mem} | "
         "samtools sort - "
-        "-o {output} &> {log.sort} "
+        " -o {output} &> {log.sort}"
 
 # alignment filtering and merging
 rule mark_duplicates:
@@ -173,18 +196,17 @@ rule samtools_merge:
         "results/6_merged/{sample}.bam"
     params:
         "" 
-    threads: config["params"]["threads"]
+    threads: 1
     conda:
         "../env.yaml"
     shell:
         "samtools merge --threads {threads} {params} "
         " {output} {input}"
 
-# regions
 rule regions:
     input:
         "results/6_merged/{sample}.bam",
-        genome_fai=get_ref_fai,
+        genome_fai=ancient(get_ref_fai),
     output:
         pos="results/7_positions/{sample}.bed",
         reg="results/8_regions/{sample}.reg.tsv"
@@ -201,7 +223,6 @@ rule regions:
     script:
         "../scripts/regions.py"
 
-# statistics
 rule stats: 
     input:
         get_position_beds
