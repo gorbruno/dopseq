@@ -24,7 +24,7 @@ def get_trim_stats(file):
     def del_1000_sep(s):
         """Remove thousand separator from string representation of number"""
         return int(''.join(s.split(',')))
-    
+
     stats = dict()
     with open(file) as f:
         for line in f:
@@ -34,7 +34,7 @@ def get_trim_stats(file):
             elif line.startswith('Pairs written (passing filters)'):
                 stats['trimmed_reads'] = del_1000_sep(ll[-2]) * 2
             elif line.startswith('Total reads processed'):
-                stats['total_reads'] = del_1000_sep(ll[-1]) 
+                stats['total_reads'] = del_1000_sep(ll[-1])
             elif line.startswith('Reads written (passing filters)'):
                 stats['trimmed_reads'] = del_1000_sep(ll[-2])
             elif line.startswith('Total basepairs processed'):
@@ -92,54 +92,61 @@ def fill_columns(cols, df):
         if c not in lanes.columns:
             lanes[c] = 0
 
+    return df
+
 def get_positions_stats(sample_data):
     """Calculate summary statistics for positions BED"""
     pos_file = os.path.join(positions_dir, sample_data.name + positions_suffix)
-    bed = pd.read_csv(pos_file, sep='\t', 
+    bed = pd.read_csv(pos_file, sep='\t',
                       header=None, names=['chr', 'start', 'end', 'cov'])
     bed['size'] = bed['end'] - bed['start']
     sample_data['average_position_bp'] = bed['size'].mean()
     sample_data['total_position_bp'] = bed['size'].sum()
     sample_data['average_position_coverage'] = bed['cov'].mean()
-    
+
     return sample_data
 
-    
+
 if __name__ == "__main__":
     # import lanes data
-    lanes = pd.read_csv(samples_file, sep='\t')
+    lanes = pd.read_csv(samples_file, sep='\t', dtype='str')
 
     # collect per-lane statistics
     lanes = lanes.apply(get_lane_stats, axis=1)
 
     # clean-up and prepare for outputting
-    lanes = lanes.apply(pd.to_numeric, errors='ignore')
+    for col in lanes.columns:
+        try:
+            lanes[col] = pd.to_numeric(lanes[col])
+        except:
+            pass
+            # print(f'{col} not numeric')
 
     # fill missing data with zeros
-    recalc_cols = ['read_pairs_examined', 
-                   'unpaired_reads_examined', 
-                   'read_pair_duplicates', 
-                   'read_pair_optical_duplicates', 
-                   'unpaired_read_duplicates', 
+    recalc_cols = ['read_pairs_examined',
+                   'unpaired_reads_examined',
+                   'read_pair_duplicates',
+                   'read_pair_optical_duplicates',
+                   'unpaired_read_duplicates',
                    'unpaired_read_optical_duplicates']
     fill_columns(recalc_cols, lanes)
 
     # get total number of mapped reads
     # if dedup_done:
-    lanes['total_mapped_reads'] = (lanes['read_pairs_examined'] * 2 + 
+    lanes['total_mapped_reads'] = (lanes['read_pairs_examined'] * 2 +
                                    lanes['unpaired_reads_examined'])
     # else:
     #     lanes['total_mapped_reads'] = lanes['raw total sequences']
 
     # recalculate duplicates
-    lanes['duplicated_reads'] = (lanes['read_pair_duplicates'] * 2 
-                                 + lanes['read_pair_optical_duplicates'] * 2
-                                 + lanes['unpaired_read_duplicates']
-                                 + lanes['unpaired_read_optical_duplicates'])
+    lanes['duplicated_reads'] = (lanes['read_pair_duplicates'] * 2 +
+                                 lanes['read_pair_optical_duplicates'] * 2 +
+                                 lanes['unpaired_read_duplicates'] +
+                                 lanes['unpaired_read_optical_duplicates'])
 
     # fill and rename post-filtering columns
-    rename_cols = {'reads_mapped':'mapped_reads_after_filter', 
-                   'bases_mapped':'mapped_bp_after_filter', 
+    rename_cols = {'reads_mapped':'mapped_reads_after_filter',
+                   'bases_mapped':'mapped_bp_after_filter',
                    'insert_size_average':'average_insert_size'}
     fill_columns(rename_cols.keys(), lanes)
     lanes = lanes.rename(columns=rename_cols)
@@ -147,22 +154,38 @@ if __name__ == "__main__":
     # subset and reorder columns
     out_cols = ['sample', 'unit', 'platform', 'adapters', 'fq1', 'fq2',
                 'total_reads', 'trimmed_reads', 'total_bp', 'trimmed_bp',
-                'total_mapped_reads', 'duplicated_reads', 'percent_duplication', 
-                'mapped_reads_after_filter', 'mapped_bp_after_filter', 'error_rate', 
+                'total_mapped_reads', 'duplicated_reads', 'percent_duplication',
+                'mapped_reads_after_filter', 'mapped_bp_after_filter', 'error_rate',
                 'average_length', 'average_insert_size', 'average_quality']
-    fill_columns(out_cols, lanes)
+    # fill_columns(out_cols, lanes)
     lanes_out = lanes[out_cols]
 
     # summarize stats by sample
-    samples_out = pd.concat([lanes_out.groupby(by='sample').sum().loc[:, 'total_reads':'mapped_bp_after_filter'], 
-                       lanes_out.groupby(by='sample').mean().loc[:, 'error_rate':'average_quality']], 
-                       axis=1)
+    samples_out = pd.concat([
+        lanes_out.groupby(by='sample')[[
+            'total_reads',
+            'trimmed_reads',
+            'total_bp',
+            'trimmed_bp',
+            'total_mapped_reads',
+            'duplicated_reads',
+            'mapped_reads_after_filter',
+            'mapped_bp_after_filter'
+            ]].sum(),
+        lanes_out.groupby(by='sample')[[
+            'percent_duplication',
+            'error_rate',
+            'average_length',
+            'average_insert_size',
+            'average_quality'
+            ]].mean()
+        ], axis=1)
 
-    # add per sample positions stats 
+    # add per sample positions stats
     samples_out.apply(get_positions_stats, axis=1)
 
     # write
     writer = pd.ExcelWriter(snakemake.output[0])
     samples_out.to_excel(writer, sheet_name='Samples')
     lanes_out.to_excel(writer, sheet_name='Units', index=False)
-    writer.save()
+    writer._save()
