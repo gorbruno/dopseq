@@ -22,18 +22,18 @@ git clone git@github.com:lca-imcb/dopseq.git
 cd dopseq
 ```
 
-Create environment for the pipeline - we suggest using mamba instead of conda to speed up dependencies resolution
+Create conda environment for the pipeline (make sure your conda uses libmamba for dependencies resolution)
 ```
-mamba env create -f env.yaml
+conda env create -f env.yaml
 ```
 
-If environment resolution fails or some dependencies don't work correctly, you can try using explicit specification files available for Linux and OS X 64-bit
+If environment resolution fails or some dependencies don't work correctly, you can try using explicit specification files available for Linux 
 
 ```
 conda create --name dopseq --file spec-linux-64.txt
 ```
 
-or
+or OS X 64-bit
 
 ```
 conda create --name dopseq --file spec-osx-64.txt
