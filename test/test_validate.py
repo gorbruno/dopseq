@@ -8,7 +8,7 @@ Sanity checks of dopseq output
 Usage: python test_validate.py {dopseq_dir}
 '''
 
-assert pd.__version__.startswith('0.23')
+assert pd.__version__.startswith('2')
 
 WD = sys.argv[1]
 STAT = os.path.join(WD, 'results/stats.xlsx')
@@ -18,7 +18,7 @@ REGS = glob.iglob('results/8_regions/*.tsv')
 def run_test(df, test, msg):
     '''If test passes, print message formatted with list of indices'''
     if test.any():
-        print(msg.format(', '.join([str(x) for x in df[test].index.tolist()])))  
+        print(msg.format(', '.join([str(x) for x in df[test].index.tolist()])))
 
 # check stats
 print('Checking stats')
