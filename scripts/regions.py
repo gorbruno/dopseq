@@ -1,7 +1,7 @@
 # supress warnings for rpy2-pandas interface deprecation
 # and 0-division during log calculation
-import warnings
-warnings.simplefilter(action='ignore')
+# import warnings
+# warnings.simplefilter(action='ignore')
 
 import pybedtools
 import pandas as pd
@@ -11,7 +11,7 @@ from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 try:
     from scipy.stats import binom_test
-except:
+except ImportError:
     from scipy.stats import binomtest as binom_test
 from collections import OrderedDict
 
@@ -32,8 +32,10 @@ def read_fai(genome_fai):
     return chrom_lens
 
 def bam_to_pos_and_dist(in_bam, out_pos, genome_fai):
-    """Convert BAM into positions and
-       distances between positions"""
+    """
+    Convert BAM into positions and
+    distances between positions
+    """
 
     in_bam = pybedtools.BedTool(in_bam)
     # non-empty BAM
@@ -126,7 +128,7 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, chrom_list, chrom_lens, 
     try:
         pandas2ri.activate()
         regions = robjects.pandas2ri.ri2py(segm[1])
-    except:
+    except AttributeError:
         with (robjects.default_converter + pandas2ri.converter).context():
             regions = robjects.conversion.get_conversion().rpy2py(segm[1])
     # normalize names
@@ -158,7 +160,7 @@ def shift_regions(regions, pos, chrom_lens):
         """
         For a single region,
         recalculate number of positions as initial clustering was done
-        on distance complements (+1 position per chromosome).
+        on intervals between positions (+1 position per chromosome).
         Get coverage and position size statistics for positions within a region.
         """
         def fill_empty(reg):
@@ -176,33 +178,42 @@ def shift_regions(regions, pos, chrom_lens):
 
             return reg
 
+        # 1 dist for empty
         if reg['reg_pos'] > 1:
-            reg_pos = pos[(pos['chrom'] == reg['chrom']) &
-                            (pos['start'] >= reg['reg_start']) &
-                            (pos['start'] <= reg['reg_end'])]
-            try:
-                reg['first_pos_start'] = reg_pos['start'].iloc[0]
-                reg['last_pos_end'] = reg_pos['end'].iloc[-1]
-                reg['reg_pos'] = reg_pos.shape[0] # nrows
-                reg['reg_reads'] = reg_pos['name'].sum()
-                reg['pos_cov_mean'] = reg_pos['name'].mean() # coverage as 'name' column in pos df
-                reg['pos_len_mean'] = (reg_pos['end']-reg_pos['start']).mean()
-                reg['pos_len_sum'] = (reg_pos['end']-reg_pos['start']).sum()
-            except: # no positions in chromosome
-                print('empty')
-                fill_empty(reg)
+            reg_pos = pos[
+                (pos['chrom'] == reg['chrom']) &
+                (pos['start'] >= reg['reg_start']) &
+                (pos['start'] <= reg['reg_end'])
+                ]
+            # 
+            # assert len(reg_pos) == int(reg['reg_pos']) - 1, \
+            #     f'{len(reg_pos) } positions, {reg.reg_pos} intervals for {reg.chrom}'
+            # try:
+            reg['first_pos_start'] = reg_pos['start'].iloc[0]
+            reg['last_pos_end'] = reg_pos['end'].iloc[-1]
+            reg['reg_pos'] = reg_pos.shape[0] # recalc from intervals to pos
+            reg['reg_reads'] = reg_pos['name'].sum() # coverage as 'name' column in pos df
+            reg['pos_cov_mean'] = reg_pos['name'].mean() 
+            reg['pos_len_mean'] = (reg_pos['end'] - reg_pos['start']).mean()
+            reg['pos_len_sum'] = (reg_pos['end'] - reg_pos['start']).sum()
+            # except: # no positions in chromosome
+            #     print('empty')
+            #     fill_empty(reg)
         else:
             fill_empty(reg)
         return reg
 
     regions = regions.sort_values(['chrom', 'reg_start'])
+    regions = regions.reset_index(drop=True)
     shift_regs = []
-    # slow iterrows
+    pr = None
     for (i, r) in regions.iterrows():
-
+        
         cr = r
-        # compare to previous region
-        try:
+        # first region in dataset
+        if pr is None:
+            cr['reg_start'] = 0
+        else:
             pr = regions.iloc[i - 1]
             # first region in chromosome
             if cr.chrom != pr.chrom:
@@ -221,11 +232,9 @@ def shift_regions(regions, pos, chrom_lens):
                 else:
                     raise ValueError('Consequent regions have same pd_mean:'
                                      '\n{}\n{}'.format(pr, cr))
-        # first region in dataset
-        except:
-            cr['reg_start'] = 0
+            
         # compare to next region
-        try:
+        if i < len(regions) - 1:
             nr = regions.iloc[i + 1]
             # last region in chromosome
             if cr.chrom != nr.chrom:
@@ -246,12 +255,13 @@ def shift_regions(regions, pos, chrom_lens):
             else:
                 pass
         # last region in dataset
-        except:
+        else:
             cr['reg_end'] = chrom_lens[cr.chrom][1]
 
         cr = annotate_region(cr, pos)
 
         shift_regs.append(cr)
+        pr = cr
 
     return pd.DataFrame(shift_regs)
 
@@ -268,9 +278,13 @@ def regions_stats(regions, chrom_lens):
     regions['chrom_len'] = pd.DataFrame(regions['chrom'].map(chrom_lens).values.tolist())[1]
     regions['log_ratio'] = np.log10( (regions['reg_pos'] / total_pos) / (regions['reg_len'] / genome_len) )
     # enrichment p-value
-    regions['p_value'] = regions.apply(lambda row: binom_test(row['reg_pos'],  total_pos,
-                                               row['reg_len'] / genome_len,
-                                               alternative='greater'), axis=1)
+    regions['p_value'] = regions.apply(
+        lambda row: binom_test(
+            row['reg_pos'],
+            total_pos,
+            row['reg_len'] / genome_len,
+            alternative='greater'
+            ), axis=1)
     return regions
 
 if __name__ == "__main__":
@@ -303,14 +317,17 @@ if __name__ == "__main__":
                     if len(l) > 0:
                         chrom_list.append(l.split()[0])
         print('Segmenting the genome with DNAcopy')
-        regions = segment_genome(dist, sample,
-                                 do_plot_reg,
-                                 out_plot,
-                                 chrom_list,
-                                 chrom_lens,
-                                 snakemake.params.plot_ncols,
-                                 snakemake.params.plot_chrom_height,
-                                 snakemake.params.plot_chrom_width)
+        regions = segment_genome(
+            dist, 
+            sample,
+            do_plot_reg,
+            out_plot,
+            chrom_list,
+            chrom_lens,
+            snakemake.params.plot_ncols,
+            snakemake.params.plot_chrom_height,
+            snakemake.params.plot_chrom_width
+            )
         print('Correcting and annotating the segments')
         regions = shift_regions(regions, pos, chrom_lens)
         print('Collecting statistics')
