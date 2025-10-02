@@ -31,7 +31,7 @@ def read_fai(genome_fai):
                 pass
     return chrom_lens
 
-def bam_to_pos_and_dist(in_bam, out_pos, genome_fai):
+def bam_to_pos_and_dist(in_bam, out_pos, genome_fai, reads_threshold):
     """
     Convert BAM into positions and
     distances between positions
@@ -45,12 +45,20 @@ def bam_to_pos_and_dist(in_bam, out_pos, genome_fai):
         pos = pos_bed.to_dataframe()
         pos['chrom'] = pos['chrom'].astype(str)
         # distance - complement of positions, i.e. end-to-start distances between positions
-        dist = pos_bed.complement(g=genome_fai).to_dataframe()
-        dist['chrom'] = dist['chrom'].astype(str)
-        # logscale end-to-start distances
-        dist['log.dist'] = np.log10(dist['end'] - dist['start'])
+        dist_raw = pos_bed.complement(g=genome_fai).to_dataframe()
+        # keep regions with mapped reads
+        valid_chroms = pos["chrom"].unique()
+        dist_valid = dist_raw[dist_raw["chrom"].isin(valid_chroms)]
+        # filter regions based on count of mapped reads
+        chrom_count = dist_raw["chrom"].value_counts()
+        chroms_to_keep = chrom_count[(chrom_count > reads_threshold)].index
+        dist_filtered = dist_valid[dist_valid["chrom"].isin(chroms_to_keep)]
 
-        return (pos, dist)
+        dist_filtered['chrom'] = dist_filtered['chrom'].astype(str)
+        # logscale end-to-start distances
+        dist_filtered['log.dist'] = np.log10(dist_filtered['end'] - dist_filtered['start'])
+
+        return (pos, dist_filtered)
     # empty BAM
     else:
         # touch positions
@@ -87,7 +95,9 @@ def segment_genome(dist, sample, do_plot_reg, out_plot, chrom_list, chrom_lens, 
             plot_chrom = list(chrom_lens.keys())
         else:
             plot_chrom = chrom_list
-        nchrom = len(plot_chrom)
+        len_chrom = len(plot_chrom)
+        len_dist = len(dist["chrom"].unique())
+        nchrom = min(len_chrom, len_dist)
         # set up figure dimensions
         ncols = ncols
         nrows = int(nchrom / ncols) + (nchrom % ncols > 0)
@@ -297,7 +307,7 @@ if __name__ == "__main__":
     out_plot = snakemake.params.plot
     sample = snakemake.params.sample
     print('Converting BAM to positions and distances between positions')
-    (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos, genome_fai)
+    (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos, genome_fai, snakemake.params.get("region", {}).get("reads_threshold", 1))
     # empty BAM - touch remaining outputs
     if pos is None:
         print('No reads - creating empty output files')

@@ -10,6 +10,7 @@ params:
     se: "--trim-n --minimum-length 20"
   picard_MarkDuplicates: "-Xmx4G"
   region:
+    reads_threshold: 5
     plot_ncols: 8
     plot_chrom_height: 2
     plot_chrom_width: 3
