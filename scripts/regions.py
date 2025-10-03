@@ -46,19 +46,24 @@ def bam_to_pos_and_dist(in_bam, out_pos, genome_fai, reads_threshold):
         pos['chrom'] = pos['chrom'].astype(str)
         # distance - complement of positions, i.e. end-to-start distances between positions
         dist_raw = pos_bed.complement(g=genome_fai).to_dataframe()
+        dist_raw['chrom'] = dist_raw['chrom'].astype(str)
         # keep regions with mapped reads
         valid_chroms = pos["chrom"].unique()
         dist_valid = dist_raw[dist_raw["chrom"].isin(valid_chroms)]
         # filter regions based on count of mapped reads
-        chrom_count = dist_raw["chrom"].value_counts()
-        chroms_to_keep = chrom_count[(chrom_count > reads_threshold)].index
-        dist_filtered = dist_valid[dist_valid["chrom"].isin(chroms_to_keep)]
-
-        dist_filtered['chrom'] = dist_filtered['chrom'].astype(str)
+        chrom_count = pos["chrom"].value_counts()
+        chroms_to_keep = chrom_count[chrom_count > reads_threshold].index
+        if len(chroms_to_keep) == 0:
+            print(f'WARNING: No regions with reads above {reads_threshold} threshold, keeping distance and position tables unfiltered')
+            dist_filtered = dist_valid
+            pos_filtered = pos
+        else:
+            dist_filtered = dist_valid[dist_valid["chrom"].isin(chroms_to_keep)]
+            pos_filtered = pos[pos["chrom"].isin(chroms_to_keep)]
         # logscale end-to-start distances
         dist_filtered['log.dist'] = np.log10(dist_filtered['end'] - dist_filtered['start'])
 
-        return (pos, dist_filtered)
+        return (pos_filtered, dist_filtered)
     # empty BAM
     else:
         # touch positions
@@ -307,7 +312,7 @@ if __name__ == "__main__":
     out_plot = snakemake.params.plot
     sample = snakemake.params.sample
     print('Converting BAM to positions and distances between positions')
-    (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos, genome_fai, snakemake.params.get("region", {}).get("reads_threshold", 1))
+    (pos, dist) = bam_to_pos_and_dist(in_bam, out_pos, genome_fai, snakemake.params.reads_threshold)
     # empty BAM - touch remaining outputs
     if pos is None:
         print('No reads - creating empty output files')

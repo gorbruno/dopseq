@@ -217,7 +217,8 @@ rule regions:
         plot_ncols=config["params"]["region"]["plot_ncols"],
         plot_chrom_height=config["params"]["region"]["plot_chrom_height"],
         plot_chrom_width=config["params"]["region"]["plot_chrom_width"],
-        chrom_list=get_chrom_list
+        chrom_list=get_chrom_list,
+        reads_threshold = config["params"]["region"]["reads_threshold"]
     conda:
         "../env.yaml"
     script:
